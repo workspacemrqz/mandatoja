@@ -1,0 +1,98 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function Login() {
+  const [, setLocation] = useLocation();
+  const [login, setLogin] = useState("");
+  const [senha, setSenha] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ login, senha }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Aguardar um pouco para garantir que o cookie seja processado
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 100);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-primary/5">
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader className="space-y-6">
+          <div className="flex items-center justify-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className="w-10 h-10 text-primary" fill="currentColor">
+              <g><path d="M226.877 20.416a206.61 206.61 0 0 0-55.922 7.72c-28.518 5.13-56 17.362-79.572 36.71L29.203 28.67 65.51 91.078a173.06 173.06 0 0 0-32.88 66.938C7.28 230.34 23.513 313.994 81.33 371.81c52.018 52.02 124.946 70.363 191.723 55.06l69.315 65.65-20.04-83.825a205.077 205.077 0 0 0 36.693-24.603L498.85 498.326 384.625 358.502a205.073 205.073 0 0 0 24.867-37.148l83.112 19.87-65.125-68.76c15.314-66.787-3.026-139.73-55.052-191.76-17.117-17.116-36.504-30.574-57.186-40.4l.688-1.27-1.565.85c-27.637-12.973-57.56-19.468-87.488-19.468zM202.07 43.908c24.817 0 49.633 5.904 72.186 17.703l-97.574 52.86-67.93-39.52C136.357 54.263 169.21 43.91 202.07 43.91zm94.09 31.623a157.965 157.965 0 0 1 16.184 14.113c54.775 54.776 60.34 139.89 16.715 200.84l-89.796-109.92L296.16 75.53zM75.668 108.544l39.793 68.4L63.84 272.24C36.7 220.5 40.648 156.814 75.668 108.543zm104.77 129.66 110.26 90.076c-60.798 42.13-144.68 36.112-198.88-18.07l-.02-.017v-.002a157.83 157.83 0 0 1-14.187-16.284l102.828-55.703z"></path></g>
+            </svg>
+            <div>
+              <h1 className="text-lg font-semibold text-card-foreground">MandatoJá</h1>
+              <p className="text-sm text-muted-foreground">Campanha Inteligente</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="login">Usuário</Label>
+              <Input
+                id="login"
+                type="text"
+                placeholder="Digite seu usuário"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
+                required
+                disabled={isLoading}
+                data-testid="input-login"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="Digite sua senha"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+                disabled={isLoading}
+                data-testid="input-senha"
+              />
+            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              data-testid="button-submit-login"
+            >
+              {isLoading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

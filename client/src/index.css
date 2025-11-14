@@ -1,0 +1,353 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0deg 0% 2.35%);
+  --foreground: hsl(0deg 0% 100%);
+  --card: hsl(0deg 0% 2.35%);
+  --card-foreground: hsl(0deg 0% 100%);
+  --popover: hsl(0deg 0% 18.82%);
+  --popover-foreground: hsl(0deg 0% 100%);
+  --primary: hsl(219.47deg 83.86% 56.27%);
+  --primary-foreground: hsl(0deg 0% 100%);
+  --secondary: hsl(0deg 0% 100%);
+  --secondary-foreground: hsl(0deg 0% 100%);
+  --muted: hsl(0deg 0% 18.82%);
+  --muted-foreground: hsl(0deg 0% 85.1%);
+  --accent: hsl(0deg 0% 7.06%);
+  --accent-foreground: hsl(219.47deg 83.86% 56.27%);
+  --destructive: hsl(219.47deg 83.86% 56.27%);
+  --destructive-foreground: hsl(0deg 0% 2.35%);
+  --border: hsl(0deg 0% 18.82%);
+  --input: hsl(0deg 0% 18.82%);
+  --ring: hsl(219.47deg 83.86% 56.27%);
+  --placeholder-color: #d1d1d1;
+  --chart-1: hsl(219.47deg 83.86% 56.27%);
+  --chart-2: hsl(219.47deg 83.86% 56.27%);
+  --chart-3: hsl(219.47deg 83.86% 56.27%);
+  --chart-4: hsl(219.47deg 83.86% 56.27%);
+  --chart-5: hsl(219.47deg 83.86% 56.27%);
+  --sidebar: hsl(180 6.6667% 97.0588%);
+  --sidebar-foreground: hsl(210 25% 7.8431%);
+  --sidebar-primary: hsl(203.8863 88.2845% 53.1373%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(211.5789 51.3514% 92.7451%);
+  --sidebar-accent-foreground: hsl(203.8863 88.2845% 53.1373%);
+  --sidebar-border: hsl(205.0000 25.0000% 90.5882%);
+  --sidebar-ring: hsl(202.8169 89.1213% 53.1373%);
+  --font-sans: Open Sans;
+  --font-serif: Architects Daughter;
+  --font-mono: Architects Daughter;
+  --radius: 0.3rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.dark {
+  --background: hsl(0 0% 0%);
+  --foreground: hsl(200 6.6667% 91.1765%);
+  --card: hsl(228 9.8039% 10%);
+  --card-foreground: hsl(0 0% 85.0980%);
+  --popover: hsl(0 0% 0%);
+  --popover-foreground: hsl(200 6.6667% 91.1765%);
+  --primary: hsl(203.7736 87.6033% 52.5490%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(195.0000 15.3846% 94.9020%);
+  --secondary-foreground: hsl(210 25% 7.8431%);
+  --muted: hsl(0 0% 9.4118%);
+  --muted-foreground: hsl(210 3.3898% 46.2745%);
+  --accent: hsl(205.7143 70% 7.8431%);
+  --accent-foreground: hsl(203.7736 87.6033% 52.5490%);
+  --destructive: hsl(356.3033 90.5579% 54.3137%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(210 5.2632% 14.9020%);
+  --input: hsl(207.6923 27.6596% 18.4314%);
+  --ring: hsl(202.8169 89.1213% 53.1373%);
+  --chart-1: hsl(203.8863 88.2845% 53.1373%);
+  --chart-2: hsl(159.7826 100% 36.0784%);
+  --chart-3: hsl(42.0290 92.8251% 56.2745%);
+  --chart-4: hsl(147.1429 78.5047% 41.9608%);
+  --chart-5: hsl(341.4894 75.2000% 50.9804%);
+  --sidebar: hsl(228 9.8039% 10%);
+  --sidebar-foreground: hsl(0 0% 85.0980%);
+  --sidebar-primary: hsl(202.8169 89.1213% 53.1373%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(205.7143 70% 7.8431%);
+  --sidebar-accent-foreground: hsl(203.7736 87.6033% 52.5490%);
+  --sidebar-border: hsl(205.7143 15.7895% 26.0784%);
+  --sidebar-ring: hsl(202.8169 89.1213% 53.1373%);
+  --font-sans: Open Sans, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 1.3rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom tooltip styling */
+.custom-tooltip-dark {
+  z-index: 9999;
+  position: relative;
+}
+
+/* Remove all focus styling and border changes from the entire site */
+*, *:before, *:after {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+*:focus,
+*:focus-visible,
+*:focus-within,
+*:hover,
+*:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--input) !important;
+}
+
+/* Remove Tailwind focus ring styles */
+.focus\:outline-none,
+.focus-visible\:outline-none,
+.focus\:ring-0,
+.focus-visible\:ring-0,
+.focus\:ring-1,
+.focus-visible\:ring-1,
+.focus\:ring-2,
+.focus-visible\:ring-2,
+.focus\:ring,
+.focus-visible\:ring,
+.focus\:ring-offset-0,
+.focus-visible\:ring-offset-0,
+.focus\:ring-offset-1,
+.focus-visible\:ring-offset-1,
+.focus\:ring-offset-2,
+.focus-visible\:ring-offset-2 {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--input) !important;
+}
+
+/* Force consistent border colors on all interactive elements */
+input,
+textarea,
+button,
+select,
+div[role="button"],
+div[role="combobox"],
+[data-testid^="button-"],
+[data-testid^="select-"] {
+  border-color: var(--input) !important;
+}
+
+/* Disable textarea resizing - fixed size only */
+textarea {
+  resize: none !important;
+}
+
+/* Prevent background color change on autofill/paste for all input fields */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
+  box-shadow: inset 0 0 20px 20px transparent !important;
+  -webkit-box-shadow: inset 0 0 20px 20px transparent !important;
+}
+
+/* Force consistent background and text color for all input states */
+input,
+textarea,
+select {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+input:focus,
+input:active,
+input:hover,
+textarea:focus,
+textarea:active,
+textarea:hover,
+select:focus,
+select:active,
+select:hover {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+input:focus,
+input:focus-visible,
+input:hover,
+input:active,
+textarea:focus,
+textarea:focus-visible,
+textarea:hover,
+textarea:active,
+button:focus,
+button:focus-visible,
+button:hover,
+button:active,
+select:focus,
+select:focus-visible,
+select:hover,
+select:active,
+div[role="button"]:focus,
+div[role="button"]:focus-visible,
+div[role="button"]:hover,
+div[role="button"]:active,
+div[role="combobox"]:focus,
+div[role="combobox"]:focus-visible,
+div[role="combobox"]:hover,
+div[role="combobox"]:active,
+[data-testid^="button-"]:focus,
+[data-testid^="button-"]:focus-visible,
+[data-testid^="button-"]:hover,
+[data-testid^="button-"]:active,
+[data-testid^="select-"]:focus,
+[data-testid^="select-"]:focus-visible,
+[data-testid^="select-"]:hover,
+[data-testid^="select-"]:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--input) !important;
+}
+
+/* Custom scrollbar styles for dropdown lists */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground));
+  border-radius: 3px;
+  opacity: 0.6;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--foreground));
+  opacity: 0.8;
+}
+
+.scrollbar-thumb-gray-300 {
+  scrollbar-color: hsl(var(--muted-foreground)) transparent;
+}
+
+.scrollbar-track-transparent {
+  /* Used with scrollbar-color above */
+}
+
+/* Global placeholder color - Override all Tailwind classes */
+* input::placeholder,
+* textarea::placeholder,
+input::placeholder,
+textarea::placeholder,
+[type="text"]::placeholder,
+[type="password"]::placeholder,
+[type="email"]::placeholder,
+[type="url"]::placeholder,
+[type="search"]::placeholder,
+[type="tel"]::placeholder,
+[type="number"]::placeholder {
+  color: #d1d1d1 !important;
+  -webkit-text-fill-color: #d1d1d1 !important;
+  opacity: 1 !important;
+}
+
+* input::-webkit-input-placeholder,
+* textarea::-webkit-input-placeholder,
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder,
+[type="text"]::-webkit-input-placeholder,
+[type="password"]::-webkit-input-placeholder,
+[type="email"]::-webkit-input-placeholder,
+[type="url"]::-webkit-input-placeholder,
+[type="search"]::-webkit-input-placeholder,
+[type="tel"]::-webkit-input-placeholder,
+[type="number"]::-webkit-input-placeholder {
+  color: #d1d1d1 !important;
+  -webkit-text-fill-color: #d1d1d1 !important;
+  opacity: 1 !important;
+}
+
+* input::-moz-placeholder,
+* textarea::-moz-placeholder,
+input::-moz-placeholder,
+textarea::-moz-placeholder,
+[type="text"]::-moz-placeholder,
+[type="password"]::-moz-placeholder,
+[type="email"]::-moz-placeholder,
+[type="url"]::-moz-placeholder,
+[type="search"]::-moz-placeholder,
+[type="tel"]::-moz-placeholder,
+[type="number"]::-moz-placeholder {
+  color: #d1d1d1 !important;
+  opacity: 1 !important;
+}
+
+* input:-ms-input-placeholder,
+* textarea:-ms-input-placeholder,
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder,
+[type="text"]:-ms-input-placeholder,
+[type="password"]:-ms-input-placeholder,
+[type="email"]:-ms-input-placeholder,
+[type="url"]:-ms-input-placeholder,
+[type="search"]:-ms-input-placeholder,
+[type="tel"]:-ms-input-placeholder,
+[type="number"]:-ms-input-placeholder {
+  color: #d1d1d1 !important;
+  opacity: 1 !important;
+}
