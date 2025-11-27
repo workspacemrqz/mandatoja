@@ -374,10 +374,10 @@ export async function wahaStopSession(config: WahaConfig): Promise<any> {
 }
 
 /**
- * Logout from session (disconnects WhatsApp account)
+ * Logout from session (disconnects WhatsApp account and removes saved credentials)
  */
 export async function wahaLogoutSession(config: WahaConfig): Promise<any> {
-  const url = `${config.url}/api/${config.session}/auth/logout`;
+  const url = `${config.url}/api/sessions/${config.session}/logout`;
   
   const response = await fetch(url, {
     method: 'POST',

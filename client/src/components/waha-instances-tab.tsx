@@ -151,29 +151,35 @@ export default function WahaInstancesTab() {
 
     try {
       // First, logout the session (disconnects WhatsApp account)
-      const logoutResponse = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/logout`, {
+      await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
-      
-      if (!logoutResponse.ok) {
-        const logoutData = await logoutResponse.json();
-        throw new Error(logoutData.error || "Erro ao fazer logout da instância");
+
+      // Wait a moment for the logout to complete
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Then start the session again to get new QR code
+      const startResponse = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const startData = await startResponse.json();
+
+      if (startData.success) {
+        // Wait a moment then fetch QR code
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        await fetchQrCode(sessionName);
+      } else {
+        setIsQrDialogOpen(false);
+        setError(startData.error || "Erro ao reconectar instância");
       }
-
-      // Wait a moment for the session to be ready for new QR code
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Refresh instances to get updated status
-      await fetchInstances();
-
-      // Fetch QR code
-      await fetchQrCode(sessionName);
     } catch (err) {
       setIsQrDialogOpen(false);
       setError(err instanceof Error ? err.message : "Erro ao reconectar instância");
     } finally {
       setIsReconnectingInstance(null);
+      fetchInstances();
     }
   };
 
