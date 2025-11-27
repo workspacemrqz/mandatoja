@@ -31,6 +31,13 @@ The system uses session-based authentication with bcrypt-hashed passwords. Sessi
 **Service**: WAHA (WhatsApp HTTP API) - a self-hosted solution for WhatsApp integration.
 **Features Used**: Sending various message types, receiving webhooks, managing contacts/groups, and queue management.
 
+**Instance Management**: The `/instancias` page provides a UI for managing WAHA sessions:
+- Create new instances/sessions
+- Delete existing instances
+- Connect (start) stopped instances
+- Display QR codes for authentication with automatic polling
+- Backend routes: POST/DELETE/GET `/api/waha/instances/*`
+
 ### AI/LLM Services
 
 **Ollama**: Self-hosted LLM service used by Clone and Militant Agents for conversational AI, with an OpenAI-compatible API and queue-based request handling.

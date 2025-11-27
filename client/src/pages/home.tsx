@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Settings, Menu, X, Bot, LogOut, Calendar, MessageCircle } from "lucide-react";
+import { Users, Settings, Menu, X, Bot, LogOut, Calendar, MessageCircle, Smartphone } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import LogoIcon from "@/assets/icons/Logo.svg";
@@ -14,8 +14,9 @@ import AgentesTab from "../components/agentes-tab";
 import SchedulingsTab from "../components/schedulings-tab";
 import SettingsTab from "../components/settings-tab";
 import ChatPage from "./chat";
+import WahaInstancesTab from "../components/waha-instances-tab";
 
-type TabType = 'dashboard' | 'eleitores' | 'equipe' | 'material' | 'agentes' | 'chat' | 'agendamentos' | 'configuracoes';
+type TabType = 'dashboard' | 'eleitores' | 'equipe' | 'material' | 'instancias' | 'agentes' | 'chat' | 'agendamentos' | 'configuracoes';
 
 export default function Home() {
   const [location, setLocation] = useLocation();
@@ -27,6 +28,7 @@ export default function Home() {
     if (path === '/eleitores') return 'eleitores';
     if (path === '/equipe') return 'equipe';
     if (path === '/material') return 'material';
+    if (path === '/instancias') return 'instancias';
     if (path === '/agentes') return 'agentes';
     if (path === '/chat') return 'chat';
     if (path === '/agendamentos') return 'agendamentos';
@@ -67,6 +69,7 @@ export default function Home() {
     { id: 'eleitores' as TabType, label: 'Eleitores', icon: 'eleitores' },
     { id: 'equipe' as TabType, label: 'Equipe', icon: 'liderancas' },
     { id: 'material' as TabType, label: 'Material', icon: 'material' },
+    { id: 'instancias' as TabType, label: 'Instâncias', icon: 'smartphone' },
     { id: 'agentes' as TabType, label: 'Agentes', icon: 'bot' },
     { id: 'chat' as TabType, label: 'Chat', icon: 'chat' },
     { id: 'agendamentos' as TabType, label: 'Agendamentos', icon: 'calendar' },
@@ -152,6 +155,7 @@ export default function Home() {
                   case 'eleitores': return <img src={EleitoresIcon} alt="" className="w-5 h-5 min-w-[20px]" />;
                   case 'liderancas': return <img src={LiderancasIcon} alt="" className="w-5 h-5 min-w-[20px]" />;
                   case 'material': return <img src={MaterialIcon} alt="" className="w-5 h-5 min-w-[20px]" />;
+                  case 'smartphone': return <Smartphone className="w-5 h-5 min-w-[20px]" />;
                   case 'bot': return <Bot className="w-5 h-5 min-w-[20px]" />;
                   case 'chat': return <MessageCircle className="w-5 h-5 min-w-[20px]" />;
                   case 'calendar': return <Calendar className="w-5 h-5 min-w-[20px]" />;
@@ -203,6 +207,7 @@ export default function Home() {
         {activeTab === 'eleitores' && <VotersTab />}
         {activeTab === 'equipe' && <LeadershipTab />}
         {activeTab === 'material' && <MaterialsTab />}
+        {activeTab === 'instancias' && <div className="p-6"><WahaInstancesTab /></div>}
         {activeTab === 'agentes' && <AgentesTab />}
         {activeTab === 'chat' && <ChatPage />}
         {activeTab === 'agendamentos' && <SchedulingsTab />}

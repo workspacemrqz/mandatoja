@@ -47,6 +47,9 @@ function Router() {
       <Route path="/material">
         {() => <ProtectedRoute component={Home} />}
       </Route>
+      <Route path="/instancias">
+        {() => <ProtectedRoute component={Home} />}
+      </Route>
       <Route path="/agentes">
         {() => <ProtectedRoute component={Home} />}
       </Route>
