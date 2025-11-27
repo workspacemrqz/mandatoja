@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Uses environment variables WAHA_URL and WAHA_API for all operations
   // Only shows instances created through this interface (stored in waha_instances table)
   
-  // Create WAHA instance (session)
+  // Create WAHA instance (session) with auto-configured webhook
   app.post("/api/waha/instances", async (req, res) => {
     try {
       const { sessionName } = req.body;
@@ -192,21 +192,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const wahaConfig: WahaConfig = {
-        url: wahaUrl,
-        apiKey: wahaApiKey,
-        session: sessionName
-      };
+      // Build webhook URL dynamically using Replit domains
+      let domain: string;
+      if (process.env.REPLIT_DEV_DOMAIN) {
+        domain = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+      } else if (process.env.REPLIT_DOMAINS) {
+        const firstDomain = process.env.REPLIT_DOMAINS.split(',')[0].trim();
+        domain = `https://${firstDomain}`;
+      } else {
+        domain = `${req.protocol}://${req.get('host')}`;
+      }
+      const webhookUrl = `${domain}/api/webhook/waha`;
 
-      // Create the session in WAHA
-      const result = await wahaCreateSession(wahaConfig);
+      // Build custom headers array for WAHA format
+      const customHeaders: Array<{ name: string; value: string }> = [];
+      if (wahaApiKey) {
+        customHeaders.push({ name: 'X-Api-Key', value: wahaApiKey });
+      }
+
+      // Create the session in WAHA with webhook configuration
+      const createResponse = await fetch(`${wahaUrl}/api/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': wahaApiKey,
+        },
+        body: JSON.stringify({
+          name: sessionName,
+          config: {
+            webhooks: [
+              {
+                url: webhookUrl,
+                events: ['message', 'session.status'],
+                customHeaders: customHeaders,
+                retries: {
+                  delaySeconds: 2,
+                  attempts: 15,
+                  policy: 'exponential'
+                }
+              }
+            ]
+          }
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Erro ao criar sessão no WAHA: ${errorText}`);
+      }
+
+      const result = await createResponse.json();
       
       // Save to our database to track instances created through this interface
       await db.insert(wahaInstances).values({ sessionName }).onConflictDoNothing();
+
+      console.log(`[WAHA] Instância "${sessionName}" criada com webhook configurado: ${webhookUrl}`);
       
       return res.status(200).json({
         success: true,
-        data: result
+        data: result,
+        webhookConfigured: {
+          url: webhookUrl,
+          events: ['message', 'session.status']
+        }
       });
     } catch (error) {
       console.error("Error creating WAHA instance:", error);
