@@ -374,13 +374,35 @@ export async function wahaStopSession(config: WahaConfig): Promise<any> {
 }
 
 /**
- * Logout from session
+ * Logout from session (disconnects WhatsApp account)
  */
 export async function wahaLogoutSession(config: WahaConfig): Promise<any> {
-  return wahaRequest(config, `/api/sessions/logout`, {
+  const url = `${config.url}/api/${config.session}/auth/logout`;
+  
+  const response = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ name: config.session }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': config.apiKey,
+    },
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`WAHA API error (${response.status}): ${errorText}`);
+  }
+
+  // WAHA may return empty response for logout, handle gracefully
+  const text = await response.text();
+  if (!text) {
+    return { success: true };
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { success: true, message: text };
+  }
 }
 
 /**
