@@ -1,7 +1,9 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateWhatsAppError } from "./storage";
-import { insertVoterSchema, insertCampaignMaterialSchema, insertConfigOptionSchema, insertLeadershipSchema, insertAssessorSchema, insertInstagramAgentSchema, insertCollectorAgentSchema, insertReplicadorAgentInstanceSchema, insertColetorAgentInstanceSchema, insertCloneAgentConfigSchema, insertCloneAgentInstanceSchema, insertCloneAgentKnowledgeSchema, insertWahaWebhookConfigSchema, insertMilitantAgentSchema } from "@shared/schema";
+import { insertVoterSchema, insertCampaignMaterialSchema, insertConfigOptionSchema, insertLeadershipSchema, insertAssessorSchema, insertInstagramAgentSchema, insertCollectorAgentSchema, insertReplicadorAgentInstanceSchema, insertColetorAgentInstanceSchema, insertCloneAgentConfigSchema, insertCloneAgentInstanceSchema, insertCloneAgentKnowledgeSchema, insertWahaWebhookConfigSchema, insertMilitantAgentSchema, wahaInstances } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { runInstagramAgentWorkflow } from "./workflows/instagram-agent";
 import { processWhatsAppMessage } from "./workflows/clone-agent";
 import { ZodError, z } from "zod";
@@ -167,6 +169,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // WAHA Instance Management Routes
   // Uses environment variables WAHA_URL and WAHA_API for all operations
+  // Only shows instances created through this interface (stored in waha_instances table)
   
   // Create WAHA instance (session)
   app.post("/api/waha/instances", async (req, res) => {
@@ -195,8 +198,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         session: sessionName
       };
 
-      // Create the session
+      // Create the session in WAHA
       const result = await wahaCreateSession(wahaConfig);
+      
+      // Save to our database to track instances created through this interface
+      await db.insert(wahaInstances).values({ sessionName }).onConflictDoNothing();
       
       return res.status(200).json({
         success: true,
@@ -231,8 +237,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         session: sessionName
       };
 
-      // Delete the session
+      // Delete the session from WAHA
       const result = await wahaDeleteSession(wahaConfig);
+      
+      // Remove from our database
+      await db.delete(wahaInstances).where(eq(wahaInstances.sessionName, sessionName));
       
       return res.status(200).json({
         success: true,
@@ -319,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // List WAHA instances (sessions)
+  // List WAHA instances (sessions) - only those created through this interface
   app.get("/api/waha/instances", async (req, res) => {
     try {
       const wahaUrl = process.env.WAHA_URL;
@@ -332,12 +341,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // List all sessions
-      const sessions = await wahaListSessions(wahaUrl, wahaApiKey);
+      // Get our tracked instances from database
+      const trackedInstances = await db.select().from(wahaInstances);
+      const trackedNames = new Set(trackedInstances.map(i => i.sessionName));
+
+      // List all sessions from WAHA
+      const allSessions = await wahaListSessions(wahaUrl, wahaApiKey);
+      
+      // Filter to only show instances created through this interface
+      const filteredSessions = (allSessions || []).filter((session: any) => 
+        trackedNames.has(session.name)
+      );
       
       return res.status(200).json({
         success: true,
-        data: sessions
+        data: filteredSessions
       });
     } catch (error) {
       console.error("Error listing WAHA instances:", error);

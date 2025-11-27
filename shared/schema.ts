@@ -424,6 +424,18 @@ export const insertMilitantGroupMemorySchema = createInsertSchema(militantGroupM
   updatedAt: true,
 });
 
+// WAHA Instances - Instances created through the Instâncias page
+export const wahaInstances = pgTable("waha_instances", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionName: text("session_name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertWahaInstanceSchema = createInsertSchema(wahaInstances).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertVoter = z.infer<typeof insertVoterSchema>;
@@ -466,3 +478,5 @@ export type InsertVoterMemory = z.infer<typeof insertVoterMemorySchema>;
 export type VoterMemory = typeof voterMemory.$inferSelect;
 export type InsertMilitantGroupMemory = z.infer<typeof insertMilitantGroupMemorySchema>;
 export type MilitantGroupMemory = typeof militantGroupMemory.$inferSelect;
+export type InsertWahaInstance = z.infer<typeof insertWahaInstanceSchema>;
+export type WahaInstance = typeof wahaInstances.$inferSelect;
