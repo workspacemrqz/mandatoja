@@ -39,6 +39,11 @@ interface WhatsAppGroup {
   name: string;
 }
 
+interface WahaInstance {
+  name: string;
+  status: string;
+}
+
 function Countdown({ lastRunAt }: { lastRunAt: Date | string | null }) {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
@@ -132,30 +137,25 @@ export default function AgentesTab() {
   const [ollamaModel, setOllamaModel] = useState("deepseek-v3.1:671b-cloud");
   const [knowledgeInput, setKnowledgeInput] = useState("");
   const [editingInstanceId, setEditingInstanceId] = useState<string | null>(null);
-  const [newInstance, setNewInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
-  const [editingInstance, setEditingInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
-  const [newReplicadorInstance, setNewReplicadorInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
-  const [editingReplicadorInstance, setEditingReplicadorInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+  const [newInstance, setNewInstance] = useState({ instanceName: "", wahaSession: "" });
+  const [editingInstance, setEditingInstance] = useState({ instanceName: "", wahaSession: "" });
+  const [newReplicadorInstance, setNewReplicadorInstance] = useState({ instanceName: "", wahaSession: "" });
+  const [editingReplicadorInstance, setEditingReplicadorInstance] = useState({ instanceName: "", wahaSession: "" });
   const [editingReplicadorInstanceId, setEditingReplicadorInstanceId] = useState<string | null>(null);
-  const [newColetorInstance, setNewColetorInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
-  const [editingColetorInstance, setEditingColetorInstance] = useState({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+  const [newColetorInstance, setNewColetorInstance] = useState({ instanceName: "", wahaSession: "" });
+  const [editingColetorInstance, setEditingColetorInstance] = useState({ instanceName: "", wahaSession: "" });
   const [editingColetorInstanceId, setEditingColetorInstanceId] = useState<string | null>(null);
   const [militantName, setMilitantName] = useState("");
   const [militantSystemPrompt, setMilitantSystemPrompt] = useState("");
-  const [militantWahaUrl, setMilitantWahaUrl] = useState("");
-  const [militantWahaApiKey, setMilitantWahaApiKey] = useState("");
-  const [militantWahaSession, setMilitantWahaSession] = useState("");
   const [militantFlowMinutes, setMilitantFlowMinutes] = useState(10);
   const [militantMessageCollectionTime, setMilitantMessageCollectionTime] = useState(30);
   const [militantOllamaModel, setMilitantOllamaModel] = useState("deepseek-v3.1:671b-cloud");
   const [selectedMilitantGroups, setSelectedMilitantGroups] = useState<Array<{id: string, name: string, active: boolean}>>([]);
   const [editingMilitantAgent, setEditingMilitantAgent] = useState<MilitantAgent | null>(null);
-  const [wizardCurrentStep, setWizardCurrentStep] = useState<1 | 2 | 3>(1);
-  const [wizardData, setWizardData] = useState<{name: string, systemPrompt: string, wahaUrl: string, wahaApiKey: string, wahaSession: string}>({
+  const [wizardCurrentStep, setWizardCurrentStep] = useState<1 | 2>(1);
+  const [wizardData, setWizardData] = useState<{name: string, systemPrompt: string, wahaSession: string}>({
     name: "",
     systemPrompt: "",
-    wahaUrl: "",
-    wahaApiKey: "",
     wahaSession: ""
   });
   const [isVerifyingWaha, setIsVerifyingWaha] = useState(false);
@@ -248,6 +248,12 @@ export default function AgentesTab() {
       bairro: '',
     }
   ];
+
+  // Fetch WAHA instances for dropdown selectors
+  const { data: wahaInstancesData } = useQuery<{ success: boolean; data: WahaInstance[] }>({
+    queryKey: ["/api/waha/instances"],
+  });
+  const wahaInstances = wahaInstancesData?.data || [];
 
   // Fetch clone agent config (singleton)
   const { data: config, isLoading: isLoadingConfig } = useQuery<CloneAgentConfig | null>({
@@ -569,7 +575,7 @@ export default function AgentesTab() {
 
   // Clone Agent Instance Mutations
   const createInstanceMutation = useMutation({
-    mutationFn: async (data: { configId: string; instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession: string }) => {
+    mutationFn: async (data: { configId: string; instanceName: string; wahaSession: string }) => {
       return await apiRequest('/api/clone-agent/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -578,7 +584,7 @@ export default function AgentesTab() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/clone-agent/instances'] });
-      setNewInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setNewInstance({ instanceName: "", wahaSession: "" });
       setIsAddCloneInstanceOpen(false);
     },
     onError: () => {
@@ -586,11 +592,11 @@ export default function AgentesTab() {
   });
 
   const updateInstanceMutation = useMutation({
-    mutationFn: async ({ id, instanceName, wahaUrl, wahaApiKey, wahaSession }: { id: string; instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession?: string | null }) => {
+    mutationFn: async ({ id, instanceName, wahaSession }: { id: string; instanceName: string; wahaSession: string }) => {
       return await apiRequest(`/api/clone-agent/instances/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, wahaUrl, wahaApiKey, wahaSession }),
+        body: JSON.stringify({ instanceName, wahaSession }),
       });
     },
     onSuccess: () => {
@@ -598,7 +604,7 @@ export default function AgentesTab() {
       setEditingInstanceId(null);
       setIsEditCloneInstanceOpen(false);
       setEditingCloneInstanceForDialog(null);
-      setEditingInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setEditingInstance({ instanceName: "", wahaSession: "" });
       // Fecha a seção aberta ligada à instância em edição
       setOpenSections(prev => {
         if (!editingInstanceId) return prev;
@@ -695,7 +701,7 @@ export default function AgentesTab() {
 
   // Replicador Agent Instance Mutations
   const createReplicadorInstanceMutation = useMutation({
-    mutationFn: async (data: { instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession: string }) => {
+    mutationFn: async (data: { instanceName: string; wahaSession: string }) => {
       return await apiRequest('/api/replicador-agent/instance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -705,7 +711,7 @@ export default function AgentesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/replicador-agent/instance'] });
       queryClient.invalidateQueries({ queryKey: ['/api/replicador-agent/groups'] });
-      setNewReplicadorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setNewReplicadorInstance({ instanceName: "", wahaSession: "" });
       setIsAddReplicadorInstanceOpen(false);
     },
     onError: (error: any) => {
@@ -713,11 +719,11 @@ export default function AgentesTab() {
   });
 
   const updateReplicadorInstanceMutation = useMutation({
-    mutationFn: async ({ id, instanceName, wahaUrl, wahaApiKey, wahaSession }: { id: string; instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession?: string | null }) => {
+    mutationFn: async ({ id, instanceName, wahaSession }: { id: string; instanceName: string; wahaSession: string }) => {
       return await apiRequest(`/api/replicador-agent/instance/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, wahaUrl, wahaApiKey, wahaSession }),
+        body: JSON.stringify({ instanceName, wahaSession }),
       });
     },
     onSuccess: () => {
@@ -726,7 +732,7 @@ export default function AgentesTab() {
       setEditingReplicadorInstanceId(null);
       setIsEditReplicadorInstanceOpen(false);
       setEditingReplicadorInstanceForDialog(null);
-      setEditingReplicadorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setEditingReplicadorInstance({ instanceName: "", wahaSession: "" });
       if (replicadorInstance) {
         setOpenSections(prev => prev.filter(key => key !== `replicador-instance-${replicadorInstance.id}`));
       }
@@ -789,7 +795,7 @@ export default function AgentesTab() {
 
   // Coletor Agent Instance Mutations
   const createColetorInstanceMutation = useMutation({
-    mutationFn: async (data: { instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession: string }) => {
+    mutationFn: async (data: { instanceName: string; wahaSession: string }) => {
       return await apiRequest('/api/coletor-agent/instance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -799,7 +805,7 @@ export default function AgentesTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/coletor-agent/instance'] });
       queryClient.invalidateQueries({ queryKey: ['/api/coletor-agent/groups'] });
-      setNewColetorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setNewColetorInstance({ instanceName: "", wahaSession: "" });
       setIsAddColetorInstanceOpen(false);
     },
     onError: (error: any) => {
@@ -807,11 +813,11 @@ export default function AgentesTab() {
   });
 
   const updateColetorInstanceMutation = useMutation({
-    mutationFn: async ({ id, instanceName, wahaUrl, wahaApiKey, wahaSession }: { id: string; instanceName: string; wahaUrl: string; wahaApiKey: string; wahaSession?: string | null }) => {
+    mutationFn: async ({ id, instanceName, wahaSession }: { id: string; instanceName: string; wahaSession: string }) => {
       return await apiRequest(`/api/coletor-agent/instance/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName, wahaUrl, wahaApiKey, wahaSession }),
+        body: JSON.stringify({ instanceName, wahaSession }),
       });
     },
     onSuccess: () => {
@@ -820,7 +826,7 @@ export default function AgentesTab() {
       setEditingColetorInstanceId(null);
       setIsEditColetorInstanceOpen(false);
       setEditingColetorInstanceForDialog(null);
-      setEditingColetorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+      setEditingColetorInstance({ instanceName: "", wahaSession: "" });
     },
     onError: () => {
     },
@@ -935,19 +941,14 @@ export default function AgentesTab() {
     if (!newInstance.instanceName.trim()) {
       return;
     }
-    if (!newInstance.wahaUrl.trim()) {
-      return;
-    }
-    if (!newInstance.wahaApiKey.trim()) {
-      return;
-    }
     if (!newInstance.wahaSession.trim()) {
       return;
     }
 
     createInstanceMutation.mutate({
       configId: config.id,
-      ...newInstance,
+      instanceName: newInstance.instanceName,
+      wahaSession: newInstance.wahaSession,
     });
   };
 
@@ -1022,9 +1023,7 @@ export default function AgentesTab() {
           id: editingMilitantAgent.id,
           name: militantName,
           systemPrompt: tempMilitantSystemPrompt,
-          wahaUrl: militantWahaUrl || undefined,
-          wahaApiKey: militantWahaApiKey || undefined,
-          wahaSession: militantWahaSession || undefined,
+          wahaSession: editingMilitantAgent.wahaSession || "",
           flowMinutes: militantFlowMinutes,
           messageCollectionTime: militantMessageCollectionTime,
           ollamaModel: militantOllamaModel,
@@ -1054,12 +1053,6 @@ export default function AgentesTab() {
     if (!newReplicadorInstance.instanceName.trim()) {
       return;
     }
-    if (!newReplicadorInstance.wahaUrl.trim()) {
-      return;
-    }
-    if (!newReplicadorInstance.wahaApiKey.trim()) {
-      return;
-    }
     if (!newReplicadorInstance.wahaSession.trim()) {
       return;
     }
@@ -1075,12 +1068,6 @@ export default function AgentesTab() {
     if (!newColetorInstance.instanceName.trim()) {
       return;
     }
-    if (!newColetorInstance.wahaUrl.trim()) {
-      return;
-    }
-    if (!newColetorInstance.wahaApiKey.trim()) {
-      return;
-    }
     if (!newColetorInstance.wahaSession.trim()) {
       return;
     }
@@ -1094,9 +1081,7 @@ export default function AgentesTab() {
       name: string; 
       systemPrompt: string; 
       groups: string;
-      wahaUrl?: string;
-      wahaApiKey?: string;
-      wahaSession?: string;
+      wahaSession: string;
     }) => {
       return await apiRequest("/api/militant-agents", {
         method: "POST",
@@ -1108,9 +1093,6 @@ export default function AgentesTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/militant-agents"] });
       setMilitantName("");
       setMilitantSystemPrompt("");
-      setMilitantWahaUrl("");
-      setMilitantWahaApiKey("");
-      setMilitantWahaSession("");
       setSelectedMilitantGroups([]);
       setAvailableMilitantGroups([]);
       setEditingMilitantAgent(null);
@@ -1118,8 +1100,6 @@ export default function AgentesTab() {
       setWizardData({
         name: "",
         systemPrompt: "",
-        wahaUrl: "",
-        wahaApiKey: "",
         wahaSession: ""
       });
       setIsAddMilitantAgentOpen(false);
@@ -1129,13 +1109,11 @@ export default function AgentesTab() {
   });
 
   const updateMilitantAgentMutation = useMutation({
-    mutationFn: async ({ id, name, systemPrompt, wahaUrl, wahaApiKey, wahaSession, flowMinutes, messageCollectionTime, ollamaModel, groups }: { 
+    mutationFn: async ({ id, name, systemPrompt, wahaSession, flowMinutes, messageCollectionTime, ollamaModel, groups }: { 
       id: string; 
       name: string; 
       systemPrompt: string;
-      wahaUrl?: string;
-      wahaApiKey?: string;
-      wahaSession?: string;
+      wahaSession: string;
       flowMinutes?: number;
       messageCollectionTime?: number;
       ollamaModel?: string;
@@ -1144,7 +1122,7 @@ export default function AgentesTab() {
       return await apiRequest(`/api/militant-agents/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, systemPrompt, wahaUrl, wahaApiKey, wahaSession, flowMinutes, messageCollectionTime, ollamaModel, groups }),
+        body: JSON.stringify({ name, systemPrompt, wahaSession, flowMinutes, messageCollectionTime, ollamaModel, groups }),
       });
     },
     onSuccess: () => {
@@ -1152,9 +1130,6 @@ export default function AgentesTab() {
       setEditingMilitantAgent(null);
       setMilitantName("");
       setMilitantSystemPrompt("");
-      setMilitantWahaUrl("");
-      setMilitantWahaApiKey("");
-      setMilitantWahaSession("");
       setSelectedMilitantGroups([]);
       setAvailableMilitantGroups([]);
       setIsEditMilitantAgentOpen(false);
@@ -1694,9 +1669,6 @@ export default function AgentesTab() {
                                     setEditingMilitantAgent(agent);
                                     setMilitantName(agent.name);
                                     setMilitantSystemPrompt(agent.systemPrompt);
-                                    setMilitantWahaUrl(agent.wahaUrl || "");
-                                    setMilitantWahaApiKey(agent.wahaApiKey || "");
-                                    setMilitantWahaSession(agent.wahaSession || "");
                                     setMilitantFlowMinutes(agent.flowMinutes || 10);
                                     setMilitantMessageCollectionTime(agent.messageCollectionTime || 30);
                                     setMilitantOllamaModel(agent.ollamaModel || "deepseek-v3.1:671b-cloud");
@@ -1801,9 +1773,6 @@ export default function AgentesTab() {
                                   setEditingMilitantAgent(agent);
                                   setMilitantName(agent.name);
                                   setMilitantSystemPrompt(agent.systemPrompt);
-                                  setMilitantWahaUrl(agent.wahaUrl || "");
-                                  setMilitantWahaApiKey(agent.wahaApiKey || "");
-                                  setMilitantWahaSession(agent.wahaSession || "");
                                   setMilitantFlowMinutes(agent.flowMinutes || 10);
                                   setMilitantMessageCollectionTime(agent.messageCollectionTime || 30);
                                   setMilitantOllamaModel(agent.ollamaModel || "deepseek-v3.1:671b-cloud");
@@ -2549,55 +2518,39 @@ export default function AgentesTab() {
         <DialogContent className="max-w-lg sm:max-w-xl" aria-label="Modal Adicionar Agente replicador">
           <DialogHeader>
             <DialogTitle>Adicionar Agente (Replicador)</DialogTitle>
-            <DialogDescription>Preencha os dados da instância WAHA</DialogDescription>
+            <DialogDescription>Selecione a instância WAHA para vincular</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); handleAddReplicadorInstance(); }}
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="replicador-instance-name-modal">Nome da Instância</Label>
+              <Label htmlFor="replicador-instance-name-modal">Nome do Agente</Label>
               <Input
                 id="replicador-instance-name-modal"
-                placeholder="Nome da Instância"
+                placeholder="Nome do agente"
                 value={newReplicadorInstance.instanceName}
                 onChange={(e) => setNewReplicadorInstance({ ...newReplicadorInstance, instanceName: e.target.value })}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="replicador-instance-url-modal">URL da API WAHA</Label>
-              <Input
-                id="replicador-instance-url-modal"
-                placeholder="https://seu-servidor-waha.com"
-                value={newReplicadorInstance.wahaUrl}
-                onChange={(e) => setNewReplicadorInstance({ ...newReplicadorInstance, wahaUrl: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="replicador-instance-api-key-modal">API Key WAHA</Label>
-              <Input
-                id="replicador-instance-api-key-modal"
-                type="password"
-                placeholder="Sua API Key WAHA"
-                value={newReplicadorInstance.wahaApiKey}
-                onChange={(e) => setNewReplicadorInstance({ ...newReplicadorInstance, wahaApiKey: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="replicador-instance-session-modal">Sessão WAHA</Label>
-              <Input
-                id="replicador-instance-session-modal"
-                placeholder="Nome da sessão (ex: default)"
-                value={newReplicadorInstance.wahaSession}
-                onChange={(e) => setNewReplicadorInstance({ ...newReplicadorInstance, wahaSession: e.target.value })}
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={newReplicadorInstance.wahaSession} onValueChange={(value) => setNewReplicadorInstance({ ...newReplicadorInstance, wahaSession: value })}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline" aria-label="Cancelar Adicionar Agente">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={createReplicadorInstanceMutation.isPending} aria-label="Confirmar Adicionar Agente">
+              <Button type="submit" disabled={createReplicadorInstanceMutation.isPending || !newReplicadorInstance.wahaSession} aria-label="Confirmar Adicionar Agente">
                 {createReplicadorInstanceMutation.isPending ? "Adicionando..." : "Confirmar"}
               </Button>
             </DialogFooter>
@@ -2610,75 +2563,55 @@ export default function AgentesTab() {
         setIsEditReplicadorInstanceOpen(open);
         if (!open) {
           setEditingReplicadorInstanceForDialog(null);
-          setEditingReplicadorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+          setEditingReplicadorInstance({ instanceName: "", wahaSession: "" });
         }
       }}>
         <DialogContent className="max-w-xl" aria-label="Modal Editar Instância Replicador">
           <DialogHeader>
-            <DialogTitle>Editar Instância (Replicador)</DialogTitle>
-            <DialogDescription>Atualize as configurações da instância WAHA</DialogDescription>
+            <DialogTitle>Editar Agente (Replicador)</DialogTitle>
+            <DialogDescription>Atualize as configurações do agente</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
             if (!editingReplicadorInstanceForDialog) return;
 
-            if (!editingReplicadorInstance.instanceName.trim() || !editingReplicadorInstance.wahaUrl.trim() || !editingReplicadorInstance.wahaApiKey.trim()) {
+            if (!editingReplicadorInstance.instanceName.trim() || !editingReplicadorInstance.wahaSession.trim()) {
               return;
             }
 
             updateReplicadorInstanceMutation.mutate({
               id: editingReplicadorInstanceForDialog.id,
               instanceName: editingReplicadorInstance.instanceName.trim(),
-              wahaUrl: editingReplicadorInstance.wahaUrl.trim(),
-              wahaApiKey: editingReplicadorInstance.wahaApiKey.trim(),
-              wahaSession: editingReplicadorInstance.wahaSession?.trim() || null,
+              wahaSession: editingReplicadorInstance.wahaSession.trim(),
             });
           }} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-replicador-instance-name">Nome da Instância</Label>
+              <Label htmlFor="edit-replicador-instance-name">Nome do Agente</Label>
               <Input
                 id="edit-replicador-instance-name"
                 value={editingReplicadorInstance.instanceName}
                 onChange={(e) => setEditingReplicadorInstance({...editingReplicadorInstance, instanceName: e.target.value})}
-                placeholder="Nome da instância"
+                placeholder="Nome do agente"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-replicador-instance-url">URL da API WAHA</Label>
-              <Input
-                id="edit-replicador-instance-url"
-                value={editingReplicadorInstance.wahaUrl}
-                onChange={(e) => setEditingReplicadorInstance({...editingReplicadorInstance, wahaUrl: e.target.value})}
-                placeholder="https://waha.exemplo.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-replicador-instance-apikey">API Key WAHA</Label>
-              <Input
-                id="edit-replicador-instance-apikey"
-                type="password"
-                value={editingReplicadorInstance.wahaApiKey}
-                onChange={(e) => setEditingReplicadorInstance({...editingReplicadorInstance, wahaApiKey: e.target.value})}
-                placeholder="Sua API Key"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-replicador-instance-session">Sessão WAHA (opcional)</Label>
-              <Input
-                id="edit-replicador-instance-session"
-                value={editingReplicadorInstance.wahaSession}
-                onChange={(e) => setEditingReplicadorInstance({...editingReplicadorInstance, wahaSession: e.target.value})}
-                placeholder="Nome da sessão"
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={editingReplicadorInstance.wahaSession} onValueChange={(value) => setEditingReplicadorInstance({...editingReplicadorInstance, wahaSession: value})}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={updateReplicadorInstanceMutation.isPending}>
+              <Button type="submit" disabled={updateReplicadorInstanceMutation.isPending || !editingReplicadorInstance.wahaSession}>
                 {updateReplicadorInstanceMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
@@ -2690,55 +2623,39 @@ export default function AgentesTab() {
         <DialogContent className="max-w-lg sm:max-w-xl" aria-label="Modal Adicionar Agente clone">
           <DialogHeader>
             <DialogTitle>Adicionar Agente</DialogTitle>
-            <DialogDescription>Preencha os dados da instância WAHA</DialogDescription>
+            <DialogDescription>Selecione a instância WAHA para vincular</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); handleAddInstance(); }}
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="clone-instance-name-modal">Nome da Instância</Label>
+              <Label htmlFor="clone-instance-name-modal">Nome do Agente</Label>
               <Input
                 id="clone-instance-name-modal"
-                placeholder="Nome da Instância"
+                placeholder="Nome do agente"
                 value={newInstance.instanceName}
                 onChange={(e) => setNewInstance({ ...newInstance, instanceName: e.target.value })}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="clone-instance-url-modal">URL da API WAHA</Label>
-              <Input
-                id="clone-instance-url-modal"
-                placeholder="https://seu-servidor-waha.com"
-                value={newInstance.wahaUrl}
-                onChange={(e) => setNewInstance({ ...newInstance, wahaUrl: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clone-instance-api-key-modal">API Key WAHA</Label>
-              <Input
-                id="clone-instance-api-key-modal"
-                type="password"
-                placeholder="Sua API Key WAHA"
-                value={newInstance.wahaApiKey}
-                onChange={(e) => setNewInstance({ ...newInstance, wahaApiKey: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clone-instance-session-modal">Sessão WAHA</Label>
-              <Input
-                id="clone-instance-session-modal"
-                placeholder="Nome da sessão (ex: default)"
-                value={newInstance.wahaSession}
-                onChange={(e) => setNewInstance({ ...newInstance, wahaSession: e.target.value })}
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={newInstance.wahaSession} onValueChange={(value) => setNewInstance({ ...newInstance, wahaSession: value })}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline" aria-label="Cancelar Adicionar Agente">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={createInstanceMutation.isPending} aria-label="Confirmar Adicionar Agente">
+              <Button type="submit" disabled={createInstanceMutation.isPending || !newInstance.wahaSession} aria-label="Confirmar Adicionar Agente">
                 {createInstanceMutation.isPending ? "Adicionando..." : "Confirmar"}
               </Button>
             </DialogFooter>
@@ -2750,55 +2667,39 @@ export default function AgentesTab() {
         <DialogContent className="max-w-lg sm:max-w-xl" aria-label="Modal Adicionar Agente">
           <DialogHeader>
             <DialogTitle>Adicionar Agente (Coletor)</DialogTitle>
-            <DialogDescription>Preencha os dados da instância WAHA</DialogDescription>
+            <DialogDescription>Selecione a instância WAHA para vincular</DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => { e.preventDefault(); handleAddColetorInstance(); }}
             className="space-y-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="coletor-instance-name-modal">Nome da Instância</Label>
+              <Label htmlFor="coletor-instance-name-modal">Nome do Agente</Label>
               <Input
                 id="coletor-instance-name-modal"
-                placeholder="Nome da Instância"
+                placeholder="Nome do agente"
                 value={newColetorInstance.instanceName}
                 onChange={(e) => setNewColetorInstance({ ...newColetorInstance, instanceName: e.target.value })}
                 autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="coletor-instance-url-modal">URL da API WAHA</Label>
-              <Input
-                id="coletor-instance-url-modal"
-                placeholder="https://seu-servidor-waha.com"
-                value={newColetorInstance.wahaUrl}
-                onChange={(e) => setNewColetorInstance({ ...newColetorInstance, wahaUrl: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="coletor-instance-api-key-modal">API Key WAHA</Label>
-              <Input
-                id="coletor-instance-api-key-modal"
-                type="password"
-                placeholder="Sua API Key WAHA"
-                value={newColetorInstance.wahaApiKey}
-                onChange={(e) => setNewColetorInstance({ ...newColetorInstance, wahaApiKey: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="coletor-instance-session-modal">Sessão WAHA</Label>
-              <Input
-                id="coletor-instance-session-modal"
-                placeholder="Nome da sessão (ex: default)"
-                value={newColetorInstance.wahaSession}
-                onChange={(e) => setNewColetorInstance({ ...newColetorInstance, wahaSession: e.target.value })}
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={newColetorInstance.wahaSession} onValueChange={(value) => setNewColetorInstance({ ...newColetorInstance, wahaSession: value })}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline" aria-label="Cancelar Adicionar Agente">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={createColetorInstanceMutation.isPending} aria-label="Confirmar Adicionar Agente">
+              <Button type="submit" disabled={createColetorInstanceMutation.isPending || !newColetorInstance.wahaSession} aria-label="Confirmar Adicionar Agente">
                 {createColetorInstanceMutation.isPending ? "Adicionando..." : "Confirmar"}
               </Button>
             </DialogFooter>
@@ -2811,75 +2712,55 @@ export default function AgentesTab() {
         setIsEditColetorInstanceOpen(open);
         if (!open) {
           setEditingColetorInstanceForDialog(null);
-          setEditingColetorInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+          setEditingColetorInstance({ instanceName: "", wahaSession: "" });
         }
       }}>
         <DialogContent className="max-w-xl" aria-label="Modal Editar Instância Coletor">
           <DialogHeader>
-            <DialogTitle>Editar Instância (Coletor)</DialogTitle>
-            <DialogDescription>Atualize as configurações da instância WAHA</DialogDescription>
+            <DialogTitle>Editar Agente (Coletor)</DialogTitle>
+            <DialogDescription>Atualize as configurações do agente</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
             if (!editingColetorInstanceForDialog) return;
 
-            if (!editingColetorInstance.instanceName.trim() || !editingColetorInstance.wahaUrl.trim() || !editingColetorInstance.wahaApiKey.trim()) {
+            if (!editingColetorInstance.instanceName.trim() || !editingColetorInstance.wahaSession.trim()) {
               return;
             }
 
             updateColetorInstanceMutation.mutate({
               id: editingColetorInstanceForDialog.id,
               instanceName: editingColetorInstance.instanceName.trim(),
-              wahaUrl: editingColetorInstance.wahaUrl.trim(),
-              wahaApiKey: editingColetorInstance.wahaApiKey.trim(),
-              wahaSession: editingColetorInstance.wahaSession?.trim() || null,
+              wahaSession: editingColetorInstance.wahaSession.trim(),
             });
           }} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-coletor-instance-name">Nome da Instância</Label>
+              <Label htmlFor="edit-coletor-instance-name">Nome do Agente</Label>
               <Input
                 id="edit-coletor-instance-name"
                 value={editingColetorInstance.instanceName}
                 onChange={(e) => setEditingColetorInstance({...editingColetorInstance, instanceName: e.target.value})}
-                placeholder="Nome da instância"
+                placeholder="Nome do agente"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-coletor-instance-url">URL da API WAHA</Label>
-              <Input
-                id="edit-coletor-instance-url"
-                value={editingColetorInstance.wahaUrl}
-                onChange={(e) => setEditingColetorInstance({...editingColetorInstance, wahaUrl: e.target.value})}
-                placeholder="https://waha.exemplo.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-coletor-instance-apikey">API Key WAHA</Label>
-              <Input
-                id="edit-coletor-instance-apikey"
-                type="password"
-                value={editingColetorInstance.wahaApiKey}
-                onChange={(e) => setEditingColetorInstance({...editingColetorInstance, wahaApiKey: e.target.value})}
-                placeholder="Sua API Key"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-coletor-instance-session">Sessão WAHA (opcional)</Label>
-              <Input
-                id="edit-coletor-instance-session"
-                value={editingColetorInstance.wahaSession}
-                onChange={(e) => setEditingColetorInstance({...editingColetorInstance, wahaSession: e.target.value})}
-                placeholder="Nome da sessão"
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={editingColetorInstance.wahaSession} onValueChange={(value) => setEditingColetorInstance({...editingColetorInstance, wahaSession: value})}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={updateColetorInstanceMutation.isPending}>
+              <Button type="submit" disabled={updateColetorInstanceMutation.isPending || !editingColetorInstance.wahaSession}>
                 {updateColetorInstanceMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
@@ -3221,8 +3102,6 @@ export default function AgentesTab() {
           setWizardData({
             name: "",
             systemPrompt: "",
-            wahaUrl: "",
-            wahaApiKey: "",
             wahaSession: ""
           });
           setSelectedMilitantGroups([]);
@@ -3243,7 +3122,7 @@ export default function AgentesTab() {
             <div className="space-y-6">
               {/* Progress Indicator */}
               <div className="flex items-center justify-center gap-2">
-                {[1, 2, 3].map((step) => (
+                {[1, 2].map((step) => (
                   <div key={step} className="flex items-center">
                     <div 
                       className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-semibold transition-colors ${
@@ -3257,7 +3136,7 @@ export default function AgentesTab() {
                     >
                       {step}
                     </div>
-                    {step < 3 && (
+                    {step < 2 && (
                       <div className={`w-12 h-0.5 ${wizardCurrentStep > step ? 'bg-primary' : 'bg-muted'}`} />
                     )}
                   </div>
@@ -3319,47 +3198,107 @@ export default function AgentesTab() {
                 </div>
               )}
 
-              {/* Step 2: WAHA Credentials */}
+              {/* Step 2: WAHA Instance Selection + Group Selection */}
               {wizardCurrentStep === 2 && (
                 <div className="space-y-4" data-testid="wizard-step-2">
                   <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold">Credenciais WAHA</h3>
-                    <p className="text-sm text-muted-foreground">Configure a conexão com WAHA</p>
+                    <h3 className="text-lg font-semibold">Instância WAHA e Grupos</h3>
+                    <p className="text-sm text-muted-foreground">Selecione a instância WAHA e os grupos</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="wizard-militant-waha-url">URL WAHA *</Label>
-                    <Input
-                      id="wizard-militant-waha-url"
-                      placeholder="https://waha.seu-servidor.com"
-                      value={wizardData.wahaUrl}
-                      onChange={(e) => setWizardData({...wizardData, wahaUrl: e.target.value})}
-                      data-testid="input-wizard-militant-waha-url"
-                    />
+                    <Label>Instância WAHA *</Label>
+                    <SimpleSelect 
+                      value={wizardData.wahaSession} 
+                      onValueChange={async (value) => {
+                        setWizardData({...wizardData, wahaSession: value});
+                        setIsVerifyingWaha(true);
+                        try {
+                          const groupsResponse = await apiRequest("/api/waha/fetch-groups-by-instance", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ instanceName: value })
+                          });
+                          const groupsData = await groupsResponse.json();
+                          setAvailableMilitantGroups(groupsData);
+                        } catch (error) {
+                          console.error('Error fetching groups:', error);
+                          setAvailableMilitantGroups([]);
+                        } finally {
+                          setIsVerifyingWaha(false);
+                        }
+                      }}
+                    >
+                      <SimpleSelectTrigger>
+                        <SimpleSelectValue placeholder="Selecione uma instância" />
+                      </SimpleSelectTrigger>
+                      <SimpleSelectContent 
+                        items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                        emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                      />
+                    </SimpleSelect>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="wizard-militant-waha-apikey">API Key WAHA *</Label>
-                    <Input
-                      id="wizard-militant-waha-apikey"
-                      type="password"
-                      placeholder="sua-api-key"
-                      value={wizardData.wahaApiKey}
-                      onChange={(e) => setWizardData({...wizardData, wahaApiKey: e.target.value})}
-                      data-testid="input-wizard-militant-waha-apikey"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="wizard-militant-waha-session">Nome da Sessão *</Label>
-                    <Input
-                      id="wizard-militant-waha-session"
-                      placeholder="nome-da-sessao"
-                      value={wizardData.wahaSession}
-                      onChange={(e) => setWizardData({...wizardData, wahaSession: e.target.value})}
-                      data-testid="input-wizard-militant-waha-session"
-                    />
-                  </div>
+
+                  {isVerifyingWaha ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : wizardData.wahaSession && (
+                    <>
+                      <div className="text-center mt-4">
+                        <p className="text-sm text-muted-foreground">
+                          {selectedMilitantGroups.length > 0 
+                            ? `${selectedMilitantGroups.length} grupo(s) selecionado(s)`
+                            : 'Selecione os grupos onde o agente irá atuar'
+                          }
+                        </p>
+                      </div>
+
+                      {availableMilitantGroups.length > 0 ? (
+                        <ScrollArea className="h-[250px] rounded-md border border-border p-4">
+                          <div className="space-y-3">
+                            {availableMilitantGroups.map((group) => {
+                              const isSelected = selectedMilitantGroups.some(g => g.id === group.id);
+                              return (
+                                <div 
+                                  key={group.id} 
+                                  className="flex items-start space-x-3 p-3 rounded-md border border-border bg-background hover:bg-accent/10 transition-colors"
+                                >
+                                  <Checkbox
+                                    id={`wizard-group-${group.id}`}
+                                    checked={isSelected}
+                                    onCheckedChange={(checked: boolean) => {
+                                      if (checked) {
+                                        setSelectedMilitantGroups(prev => [
+                                          ...prev,
+                                          { id: group.id, name: group.name, active: true }
+                                        ]);
+                                      } else {
+                                        setSelectedMilitantGroups(prev => 
+                                          prev.filter(g => g.id !== group.id)
+                                        );
+                                      }
+                                    }}
+                                    data-testid={`checkbox-wizard-group-${group.id}`}
+                                  />
+                                  <Label
+                                    htmlFor={`wizard-group-${group.id}`}
+                                    className="flex-1 cursor-pointer text-sm font-normal"
+                                  >
+                                    <div className="font-medium text-white dark:text-white">{group.name}</div>
+                                  </Label>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p>Nenhum grupo encontrado para esta instância.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
 
                   <div className="flex justify-between gap-2 pt-4">
                     <Button
@@ -3370,162 +3309,15 @@ export default function AgentesTab() {
                       Voltar
                     </Button>
                     <Button
-                      onClick={async () => {
-                        if (!wizardData.wahaUrl.trim()) {
-                          return;
-                        }
-                        if (!wizardData.wahaApiKey.trim()) {
-                          return;
-                        }
-                        if (!wizardData.wahaSession.trim()) {
-                          return;
-                        }
-
-                        setIsVerifyingWaha(true);
-                        try {
-                          // 1. Primeiro VERIFICA as credenciais
-                          const verifyResponse = await apiRequest("/api/waha/verify", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              wahaUrl: wizardData.wahaUrl,
-                              wahaApiKey: wizardData.wahaApiKey,
-                              wahaSession: wizardData.wahaSession
-                            })
-                          });
-                          const verifyData = await verifyResponse.json();
-
-                          if (!verifyData.success) {
-                            setIsVerifyingWaha(false);
-                            return;
-                          }
-
-                          // 2. Verificar status da sessão WAHA
-                          const statusResponse = await fetch(
-                            `/api/waha/session-status?wahaUrl=${encodeURIComponent(wizardData.wahaUrl)}&wahaApiKey=${encodeURIComponent(wizardData.wahaApiKey)}&session=${encodeURIComponent(wizardData.wahaSession)}`
-                          );
-                          const statusData = await statusResponse.json();
-
-                          if (!statusData.connected) {
-                            setIsVerifyingWaha(false);
-                            return;
-                          }
-
-                          // 3. Se conexão estabelecida, ENTÃO busca grupos
-                          const groupsResponse = await apiRequest("/api/waha/fetch-groups", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              wahaUrl: wizardData.wahaUrl,
-                              wahaApiKey: wizardData.wahaApiKey,
-                              wahaSession: wizardData.wahaSession
-                            })
-                          });
-                          const groupsData = await groupsResponse.json();
-
-                          setAvailableMilitantGroups(groupsData);
-
-                          // 4. Avança para Step 3
-                          setWizardCurrentStep(3);
-                        } catch (error) {
-                          console.error('Error verifying WAHA:', error);
-                        } finally {
-                          setIsVerifyingWaha(false);
-                        }
-                      }}
-                      disabled={isVerifyingWaha}
-                      data-testid="button-wizard-verify-step2"
-                    >
-                      {isVerifyingWaha ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Verificando...
-                        </>
-                      ) : (
-                        'Ativar'
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Group Selection */}
-              {wizardCurrentStep === 3 && (
-                <div className="space-y-4" data-testid="wizard-step-3">
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold">Seleção de Grupos</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedMilitantGroups.length > 0 
-                        ? `${selectedMilitantGroups.length} grupo(s) selecionado(s)`
-                        : 'Selecione os grupos onde o agente irá atuar'
-                      }
-                    </p>
-                  </div>
-
-                  {availableMilitantGroups.length > 0 ? (
-                    <ScrollArea className="h-[300px] rounded-md border border-border p-4">
-                      <div className="space-y-3">
-                        {availableMilitantGroups.map((group) => {
-                          const isSelected = selectedMilitantGroups.some(g => g.id === group.id);
-                          return (
-                            <div 
-                              key={group.id} 
-                              className="flex items-start space-x-3 p-3 rounded-md border border-border bg-background hover:bg-accent/10 transition-colors"
-                            >
-                              <Checkbox
-                                id={`wizard-group-${group.id}`}
-                                checked={isSelected}
-                                onCheckedChange={(checked: boolean) => {
-                                  if (checked) {
-                                    setSelectedMilitantGroups(prev => [
-                                      ...prev,
-                                      { id: group.id, name: group.name, active: true }
-                                    ]);
-                                  } else {
-                                    setSelectedMilitantGroups(prev => 
-                                      prev.filter(g => g.id !== group.id)
-                                    );
-                                  }
-                                }}
-                                data-testid={`checkbox-wizard-group-${group.id}`}
-                              />
-                              <Label
-                                htmlFor={`wizard-group-${group.id}`}
-                                className="flex-1 cursor-pointer text-sm font-normal"
-                              >
-                                <div className="font-medium text-white dark:text-white">{group.name}</div>
-                              </Label>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </ScrollArea>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>Nenhum grupo encontrado.</p>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between gap-2 pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setWizardCurrentStep(2)}
-                      data-testid="button-wizard-back-step3"
-                    >
-                      Voltar
-                    </Button>
-                    <Button
                       onClick={() => {
                         createMilitantAgentMutation.mutate({
                           name: wizardData.name,
                           systemPrompt: wizardData.systemPrompt,
                           groups: JSON.stringify(selectedMilitantGroups),
-                          wahaUrl: wizardData.wahaUrl,
-                          wahaApiKey: wizardData.wahaApiKey,
                           wahaSession: wizardData.wahaSession
                         });
                       }}
-                      disabled={createMilitantAgentMutation.isPending}
+                      disabled={createMilitantAgentMutation.isPending || !wizardData.wahaSession}
                       data-testid="button-wizard-create-agent"
                     >
                       {createMilitantAgentMutation.isPending ? "Criando..." : "Criar Agente"}
@@ -3636,9 +3428,6 @@ export default function AgentesTab() {
           setEditingMilitantAgent(null);
           setMilitantName("");
           setMilitantSystemPrompt("");
-          setMilitantWahaUrl("");
-          setMilitantWahaApiKey("");
-          setMilitantWahaSession("");
           setMilitantFlowMinutes(10);
           setMilitantMessageCollectionTime(30);
           setMilitantOllamaModel("deepseek-v3.1:671b-cloud");
@@ -3665,9 +3454,7 @@ export default function AgentesTab() {
               id: editingMilitantAgent.id,
               name: militantName,
               systemPrompt: militantSystemPrompt,
-              wahaUrl: militantWahaUrl || undefined,
-              wahaApiKey: militantWahaApiKey || undefined,
-              wahaSession: militantWahaSession || undefined,
+              wahaSession: editingMilitantAgent.wahaSession || "",
               flowMinutes: militantFlowMinutes,
               messageCollectionTime: militantMessageCollectionTime,
               ollamaModel: militantOllamaModel,
@@ -3810,68 +3597,15 @@ export default function AgentesTab() {
               </div>
             </Collapsible>
 
-            {/* Credenciais WAHA */}
-            <Collapsible
-              open={openSections.includes('edit-militant-waha')}
-              onOpenChange={(open) => {
-                setOpenSections(prev =>
-                  open
-                    ? [...prev, 'edit-militant-waha']
-                    : prev.filter(key => key !== 'edit-militant-waha')
-                );
-              }}
-            >
-              <div className="p-4 bg-[#090909] rounded-lg border border-border">
-                <CollapsibleTrigger asChild>
-                  <div className="flex justify-between items-center cursor-pointer hover:bg-accent/5 transition-colors -m-4 p-4 rounded-lg">
-                    <div>
-                      <h4 className="font-semibold">Credenciais WAHA</h4>
-                      <p className="text-sm text-muted-foreground">Configurações de conexão com WhatsApp</p>
-                    </div>
-                    <ChevronDown
-                      className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${
-                        openSections.includes('edit-militant-waha') ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="pt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-militant-waha-url">URL WAHA</Label>
-                      <Input
-                        id="edit-militant-waha-url"
-                        placeholder="https://waha.seu-servidor.com"
-                        value={militantWahaUrl}
-                        onChange={(e) => setMilitantWahaUrl(e.target.value)}
-                        data-testid="input-edit-militant-waha-url"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-militant-waha-apikey">API Key WAHA</Label>
-                      <Input
-                        id="edit-militant-waha-apikey"
-                        type="password"
-                        placeholder="sua-api-key"
-                        value={militantWahaApiKey}
-                        onChange={(e) => setMilitantWahaApiKey(e.target.value)}
-                        data-testid="input-edit-militant-waha-apikey"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-militant-waha-session">Nome da Sessão</Label>
-                      <Input
-                        id="edit-militant-waha-session"
-                        placeholder="nome-da-sessao"
-                        value={militantWahaSession}
-                        onChange={(e) => setMilitantWahaSession(e.target.value)}
-                        data-testid="input-edit-militant-waha-session"
-                      />
-                    </div>
-                  </div>
-                </CollapsibleContent>
+            {/* Instância WAHA */}
+            <div className="p-4 bg-[#090909] rounded-lg border border-border">
+              <div className="space-y-2">
+                <Label>Instância WAHA</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Instância atual: {editingMilitantAgent?.wahaSession || "Nenhuma"}
+                </p>
               </div>
-            </Collapsible>
+            </div>
 
             <DialogFooter className="gap-2">
               <DialogClose asChild>
@@ -4041,75 +3775,55 @@ export default function AgentesTab() {
         setIsEditCloneInstanceOpen(open);
         if (!open) {
           setEditingCloneInstanceForDialog(null);
-          setEditingInstance({ instanceName: "", wahaUrl: "", wahaApiKey: "", wahaSession: "" });
+          setEditingInstance({ instanceName: "", wahaSession: "" });
         }
       }}>
         <DialogContent className="max-w-xl" aria-label="Modal Editar Instância Clone">
           <DialogHeader>
-            <DialogTitle>Editar Instância</DialogTitle>
-            <DialogDescription>Atualize as configurações da instância do WhatsApp</DialogDescription>
+            <DialogTitle>Editar Agente</DialogTitle>
+            <DialogDescription>Atualize as configurações do agente</DialogDescription>
           </DialogHeader>
           <form onSubmit={(e) => {
             e.preventDefault();
             if (!editingCloneInstanceForDialog) return;
 
-            if (!editingInstance.instanceName.trim() || !editingInstance.wahaUrl.trim() || !editingInstance.wahaApiKey.trim()) {
+            if (!editingInstance.instanceName.trim() || !editingInstance.wahaSession.trim()) {
               return;
             }
 
             updateInstanceMutation.mutate({
               id: editingCloneInstanceForDialog.id,
               instanceName: editingInstance.instanceName.trim(),
-              wahaUrl: editingInstance.wahaUrl.trim(),
-              wahaApiKey: editingInstance.wahaApiKey.trim(),
-              wahaSession: editingInstance.wahaSession?.trim() || null,
+              wahaSession: editingInstance.wahaSession.trim(),
             });
           }} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-clone-instance-name">Nome da Instância</Label>
+              <Label htmlFor="edit-clone-instance-name">Nome do Agente</Label>
               <Input
                 id="edit-clone-instance-name"
                 value={editingInstance.instanceName}
                 onChange={(e) => setEditingInstance({...editingInstance, instanceName: e.target.value})}
-                placeholder="Nome da instância"
+                placeholder="Nome do agente"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-clone-instance-url">URL da API WAHA</Label>
-              <Input
-                id="edit-clone-instance-url"
-                value={editingInstance.wahaUrl}
-                onChange={(e) => setEditingInstance({...editingInstance, wahaUrl: e.target.value})}
-                placeholder="https://waha.exemplo.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-clone-instance-apikey">API Key WAHA</Label>
-              <Input
-                id="edit-clone-instance-apikey"
-                type="password"
-                value={editingInstance.wahaApiKey}
-                onChange={(e) => setEditingInstance({...editingInstance, wahaApiKey: e.target.value})}
-                placeholder="Sua API Key"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-clone-instance-session">Sessão WAHA (opcional)</Label>
-              <Input
-                id="edit-clone-instance-session"
-                value={editingInstance.wahaSession}
-                onChange={(e) => setEditingInstance({...editingInstance, wahaSession: e.target.value})}
-                placeholder="Nome da sessão"
-              />
+              <Label>Instância WAHA</Label>
+              <SimpleSelect value={editingInstance.wahaSession} onValueChange={(value) => setEditingInstance({...editingInstance, wahaSession: value})}>
+                <SimpleSelectTrigger>
+                  <SimpleSelectValue placeholder="Selecione uma instância" />
+                </SimpleSelectTrigger>
+                <SimpleSelectContent 
+                  items={wahaInstances.map(inst => ({ id: inst.name, value: inst.name, label: `${inst.name} (${inst.status})` }))} 
+                  emptyMessage="Nenhuma instância encontrada. Crie uma na página Instâncias."
+                />
+              </SimpleSelect>
             </div>
             <DialogFooter className="gap-2">
               <DialogClose asChild>
                 <Button type="button" variant="outline">Cancelar</Button>
               </DialogClose>
-              <Button type="submit" disabled={updateInstanceMutation.isPending}>
+              <Button type="submit" disabled={updateInstanceMutation.isPending || !editingInstance.wahaSession}>
                 {updateInstanceMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>

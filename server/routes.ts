@@ -2249,7 +2249,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/replicador-agent/instance", async (req, res) => {
     try {
-      const validatedData = insertReplicadorAgentInstanceSchema.parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({ message: "WAHA_URL ou WAHA_API não configurados no servidor" });
+      }
+      
+      // Add environment credentials to the request data
+      const dataWithCredentials = {
+        ...req.body,
+        wahaUrl: wahaUrl.replace(/\/+$/, ''),
+        wahaApiKey
+      };
+      
+      const validatedData = insertReplicadorAgentInstanceSchema.parse(dataWithCredentials);
       const instance = await storage.createReplicadorAgentInstance(validatedData);
       res.status(201).json(instance);
     } catch (error: any) {
@@ -2269,7 +2284,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/replicador-agent/instance/:id", async (req, res) => {
     try {
-      const validatedData = insertReplicadorAgentInstanceSchema.partial().parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      // Add environment credentials if wahaSession is being updated
+      const dataWithCredentials = {
+        ...req.body,
+        ...(wahaUrl && { wahaUrl: wahaUrl.replace(/\/+$/, '') }),
+        ...(wahaApiKey && { wahaApiKey })
+      };
+      
+      const validatedData = insertReplicadorAgentInstanceSchema.partial().parse(dataWithCredentials);
       const instance = await storage.updateReplicadorAgentInstance(req.params.id, validatedData);
       res.json(instance);
     } catch (error) {
@@ -2402,7 +2428,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/coletor-agent/instance", async (req, res) => {
     try {
-      const validatedData = insertColetorAgentInstanceSchema.parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({ message: "WAHA_URL ou WAHA_API não configurados no servidor" });
+      }
+      
+      // Add environment credentials to the request data
+      const dataWithCredentials = {
+        ...req.body,
+        wahaUrl: wahaUrl.replace(/\/+$/, ''),
+        wahaApiKey
+      };
+      
+      const validatedData = insertColetorAgentInstanceSchema.parse(dataWithCredentials);
       const instance = await storage.createColetorAgentInstance(validatedData);
       res.status(201).json(instance);
     } catch (error: any) {
@@ -2417,7 +2458,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/coletor-agent/instance/:id", async (req, res) => {
     try {
-      const validatedData = insertColetorAgentInstanceSchema.partial().parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      // Add environment credentials if wahaSession is being updated
+      const dataWithCredentials = {
+        ...req.body,
+        ...(wahaUrl && { wahaUrl: wahaUrl.replace(/\/+$/, '') }),
+        ...(wahaApiKey && { wahaApiKey })
+      };
+      
+      const validatedData = insertColetorAgentInstanceSchema.partial().parse(dataWithCredentials);
       const instance = await storage.updateColetorAgentInstance(req.params.id, validatedData);
       res.json(instance);
     } catch (error) {
@@ -2479,7 +2531,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/clone-agent/instances", async (req, res) => {
     try {
-      const validatedData = insertCloneAgentInstanceSchema.parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({ message: "WAHA_URL ou WAHA_API não configurados no servidor" });
+      }
+      
+      // Add environment credentials to the request data
+      const dataWithCredentials = {
+        ...req.body,
+        wahaUrl: wahaUrl.replace(/\/+$/, ''),
+        wahaApiKey
+      };
+      
+      const validatedData = insertCloneAgentInstanceSchema.parse(dataWithCredentials);
       const instance = await storage.createCloneAgentInstance(validatedData);
       res.status(201).json(instance);
     } catch (error) {
@@ -2490,7 +2557,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/clone-agent/instances/:id", async (req, res) => {
     try {
-      const validatedData = insertCloneAgentInstanceSchema.partial().parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      // Add environment credentials if wahaSession is being updated
+      const dataWithCredentials = {
+        ...req.body,
+        ...(wahaUrl && { wahaUrl: wahaUrl.replace(/\/+$/, '') }),
+        ...(wahaApiKey && { wahaApiKey })
+      };
+      
+      const validatedData = insertCloneAgentInstanceSchema.partial().parse(dataWithCredentials);
       const instance = await storage.updateCloneAgentInstance(req.params.id, validatedData);
       res.json(instance);
     } catch (error) {
@@ -2920,7 +2998,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/militant-agents", async (req, res) => {
     try {
-      const validatedData = insertMilitantAgentSchema.parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({ message: "WAHA_URL ou WAHA_API não configurados no servidor" });
+      }
+      
+      // Add environment credentials to the request data
+      const dataWithCredentials = {
+        ...req.body,
+        wahaUrl: wahaUrl.replace(/\/+$/, ''),
+        wahaApiKey
+      };
+      
+      const validatedData = insertMilitantAgentSchema.parse(dataWithCredentials);
       const agent = await storage.createMilitantAgent(validatedData);
       res.status(201).json(agent);
     } catch (error) {
@@ -2936,7 +3029,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/militant-agents/:id", async (req, res) => {
     try {
-      const validatedData = insertMilitantAgentSchema.partial().parse(req.body);
+      // Get WAHA credentials from environment variables
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+      
+      // Add environment credentials if wahaSession is being updated
+      const dataWithCredentials = {
+        ...req.body,
+        ...(wahaUrl && { wahaUrl: wahaUrl.replace(/\/+$/, '') }),
+        ...(wahaApiKey && { wahaApiKey })
+      };
+      
+      const validatedData = insertMilitantAgentSchema.partial().parse(dataWithCredentials);
       const agent = await storage.updateMilitantAgent(req.params.id, validatedData);
       if (!agent) {
         return res.status(404).json({ message: "Militant agent not found" });

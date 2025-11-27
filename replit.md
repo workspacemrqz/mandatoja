@@ -31,12 +31,21 @@ The system uses session-based authentication with bcrypt-hashed passwords. Sessi
 **Service**: WAHA (WhatsApp HTTP API) - a self-hosted solution for WhatsApp integration.
 **Features Used**: Sending various message types, receiving webhooks, managing contacts/groups, and queue management.
 
+**Centralized Credentials**: WAHA credentials are managed through environment variables:
+- `WAHA_URL`: Base URL for the WAHA API server
+- `WAHA_API`: API key for WAHA authentication
+- These are injected server-side when creating/updating agent instances
+- Agent forms only require selecting an existing WAHA session from `/instancias`
+
 **Instance Management**: The `/instancias` page provides a UI for managing WAHA sessions:
 - Create new instances/sessions
 - Delete existing instances
+- Reconnect (logout + start) to generate new QR codes
 - Connect (start) stopped instances
 - Display QR codes for authentication with automatic polling
 - Backend routes: POST/DELETE/GET `/api/waha/instances/*`
+
+**Agent Integration**: All agent types (Clone, Replicador, Coletor, Militant) now select WAHA sessions from existing instances rather than configuring credentials directly. The backend fills `wahaUrl` and `wahaApiKey` from environment variables.
 
 ### AI/LLM Services
 

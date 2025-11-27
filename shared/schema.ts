@@ -93,11 +93,12 @@ export const collectorAgents = pgTable("collector_agents", {
 });
 
 // Replicador Agent - Single WAHA Instance (limited to one)
+// wahaUrl and wahaApiKey are now filled from environment variables (WAHA_URL, WAHA_API)
 export const replicadorAgentInstances = pgTable("replicador_agent_instances", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   instanceName: text("instance_name").notNull(),
-  wahaUrl: varchar("waha_url").notNull(),
-  wahaApiKey: varchar("waha_api_key").notNull(),
+  wahaUrl: varchar("waha_url").notNull().default(""),
+  wahaApiKey: varchar("waha_api_key").notNull().default(""),
   wahaSession: varchar("waha_session").notNull(),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -105,11 +106,12 @@ export const replicadorAgentInstances = pgTable("replicador_agent_instances", {
 });
 
 // Coletor Agent - Single WAHA Instance (limited to one)
+// wahaUrl and wahaApiKey are now filled from environment variables (WAHA_URL, WAHA_API)
 export const coletorAgentInstances = pgTable("coletor_agent_instances", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   instanceName: text("instance_name").notNull(),
-  wahaUrl: varchar("waha_url").notNull(),
-  wahaApiKey: varchar("waha_api_key").notNull(),
+  wahaUrl: varchar("waha_url").notNull().default(""),
+  wahaApiKey: varchar("waha_api_key").notNull().default(""),
   wahaSession: varchar("waha_session").notNull(),
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -129,12 +131,13 @@ export const cloneAgentConfig = pgTable("clone_agent_config", {
 });
 
 // Clone Agent - Multiple WAHA Instances
+// wahaUrl and wahaApiKey are now filled from environment variables (WAHA_URL, WAHA_API)
 export const cloneAgentInstances = pgTable("clone_agent_instances", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   configId: varchar("config_id").notNull(), // References cloneAgentConfig
   instanceName: text("instance_name").notNull(), // Nome identificador da instância (ex: "WhatsApp Principal")
-  wahaUrl: varchar("waha_url").notNull(), // URL base da WAHA API
-  wahaApiKey: varchar("waha_api_key").notNull(), // API Key para autenticação
+  wahaUrl: varchar("waha_url").notNull().default(""), // URL base da WAHA API (filled from env)
+  wahaApiKey: varchar("waha_api_key").notNull().default(""), // API Key para autenticação (filled from env)
   wahaSession: varchar("waha_session").notNull(), // Nome da sessão WAHA
   isActive: boolean("is_active").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -201,6 +204,7 @@ export const wahaWebhookConfigs = pgTable("waha_webhook_configs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// wahaUrl and wahaApiKey are now filled from environment variables (WAHA_URL, WAHA_API)
 export const militantAgents = pgTable("militant_agents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -210,8 +214,8 @@ export const militantAgents = pgTable("militant_agents", {
   lastRunAt: timestamp("last_run_at"),
   lastMessageTimestamp: text("last_message_timestamp").default("{}"), // JSON object com {groupId: timestamp}
   executionLogs: text("execution_logs").notNull().default("[]"), // JSON array de logs
-  wahaUrl: varchar("waha_url").notNull(), // URL base da WAHA API
-  wahaApiKey: varchar("waha_api_key").notNull(), // API Key para autenticação
+  wahaUrl: varchar("waha_url").notNull().default(""), // URL base da WAHA API (filled from env)
+  wahaApiKey: varchar("waha_api_key").notNull().default(""), // API Key para autenticação (filled from env)
   wahaSession: varchar("waha_session").notNull(), // Nome da sessão WAHA
   flowMinutes: integer("flow_minutes").notNull().default(10), // Tempo em minutos entre respostas no mesmo grupo
   messageCollectionTime: integer("message_collection_time").notNull().default(30), // Tempo em segundos para coletar mensagens antes de responder
@@ -337,16 +341,24 @@ export const insertCollectorAgentSchema = createInsertSchema(collectorAgents).om
   id: true,
 });
 
+// wahaUrl and wahaApiKey are optional as they come from environment variables (WAHA_URL, WAHA_API)
 export const insertReplicadorAgentInstanceSchema = createInsertSchema(replicadorAgentInstances).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  wahaUrl: z.string().optional(),
+  wahaApiKey: z.string().optional(),
 });
 
+// wahaUrl and wahaApiKey are optional as they come from environment variables (WAHA_URL, WAHA_API)
 export const insertColetorAgentInstanceSchema = createInsertSchema(coletorAgentInstances).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  wahaUrl: z.string().optional(),
+  wahaApiKey: z.string().optional(),
 });
 
 export const insertCloneAgentConfigSchema = createInsertSchema(cloneAgentConfig).omit({
@@ -355,10 +367,14 @@ export const insertCloneAgentConfigSchema = createInsertSchema(cloneAgentConfig)
   updatedAt: true,
 });
 
+// wahaUrl and wahaApiKey are optional as they come from environment variables (WAHA_URL, WAHA_API)
 export const insertCloneAgentInstanceSchema = createInsertSchema(cloneAgentInstances).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  wahaUrl: z.string().optional(),
+  wahaApiKey: z.string().optional(),
 });
 
 export const insertCloneAgentKnowledgeSchema = createInsertSchema(cloneAgentKnowledge).omit({
@@ -390,11 +406,15 @@ export const insertWahaWebhookConfigSchema = createInsertSchema(wahaWebhookConfi
   totalMessagesProcessed: true,
 });
 
+// wahaUrl and wahaApiKey are optional as they come from environment variables (WAHA_URL, WAHA_API)
 export const insertMilitantAgentSchema = createInsertSchema(militantAgents).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   lastRunAt: true,
+}).extend({
+  wahaUrl: z.string().optional(),
+  wahaApiKey: z.string().optional(),
 });
 
 export const insertMilitantMessageQueueSchema = createInsertSchema(militantMessageQueue).omit({
