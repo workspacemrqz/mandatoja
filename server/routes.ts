@@ -343,19 +343,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get our tracked instances from database
       const trackedInstances = await db.select().from(wahaInstances);
-      const trackedNames = new Set(trackedInstances.map(i => i.sessionName));
+      const trackedNames = new Map(trackedInstances.map(i => [i.sessionName, i]));
 
       // List all sessions from WAHA
       const allSessions = await wahaListSessions(wahaUrl, wahaApiKey);
+      const wahaSessionMap = new Map((allSessions || []).map((s: any) => [s.name, s]));
       
-      // Filter to only show instances created through this interface
-      const filteredSessions = (allSessions || []).filter((session: any) => 
-        trackedNames.has(session.name)
-      );
+      // Build result: show all tracked instances, with WAHA status if available
+      const result = [];
+      for (const [sessionName, dbInstance] of trackedNames) {
+        const wahaSession = wahaSessionMap.get(sessionName);
+        if (wahaSession) {
+          // Session exists in WAHA - use WAHA data
+          result.push(wahaSession);
+        } else {
+          // Session is tracked but not in WAHA - show as STOPPED
+          result.push({
+            name: sessionName,
+            status: "STOPPED",
+            config: {}
+          });
+        }
+      }
       
       return res.status(200).json({
         success: true,
-        data: filteredSessions
+        data: result
       });
     } catch (error) {
       console.error("Error listing WAHA instances:", error);
