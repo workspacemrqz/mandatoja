@@ -158,7 +158,7 @@ export default function WahaInstancesTab() {
       const data = await response.json();
 
       if (data.success && data.data) {
-        const qrValue = data.data.value || data.data;
+        const qrValue = data.data.data || data.data.value || data.data;
         setQrCodeData({
           sessionName,
           qrCode: typeof qrValue === 'string' ? qrValue : JSON.stringify(qrValue),
