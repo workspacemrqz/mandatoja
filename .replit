@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "postgresql-16"]
+modules = ["nodejs-20", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -7,17 +7,13 @@ channel = "stable-25_05"
 packages = ["chromium"]
 
 [deployment]
-deploymentTarget = "gce"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33395
-externalPort = 8080
 
 [[ports]]
 localPort = 33451
@@ -46,6 +42,10 @@ externalPort = 6000
 [[ports]]
 localPort = 42013
 externalPort = 8008
+
+[[ports]]
+localPort = 42695
+externalPort = 6800
 
 [[ports]]
 localPort = 42903
