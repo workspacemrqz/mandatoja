@@ -463,9 +463,32 @@ export function calculateTypingDuration(messageLength: number): number {
  * Delete/remove a WAHA session
  */
 export async function wahaDeleteSession(config: WahaConfig): Promise<any> {
-  return wahaRequest(config, `/api/sessions/${config.session}`, {
+  const url = `${config.url}/api/sessions/${config.session}`;
+  
+  const response = await fetch(url, {
     method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': config.apiKey,
+    },
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`WAHA API error (${response.status}): ${errorText}`);
+  }
+
+  // WAHA returns empty response for DELETE, handle gracefully
+  const text = await response.text();
+  if (!text) {
+    return { success: true };
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { success: true, message: text };
+  }
 }
 
 /**
