@@ -8,7 +8,7 @@ import { runInstagramAgentWorkflow } from "./workflows/instagram-agent";
 import { processWhatsAppMessage } from "./workflows/clone-agent";
 import { ZodError, z } from "zod";
 import * as XLSX from "xlsx";
-import { wahaGetContact, wahaSendText, wahaCheckNumberExists, phoneToChatId, groupIdToWaha, wahaGetGroups, wahaGetGroup, wahaGetGroupParticipants, wahaGetSession, wahaCreateSession, wahaStartSession, wahaDeleteSession, wahaGetQrCode, wahaListSessions, type WahaConfig } from "./lib/waha-client";
+import { wahaGetContact, wahaSendText, wahaCheckNumberExists, phoneToChatId, groupIdToWaha, wahaGetGroups, wahaGetGroup, wahaGetGroupParticipants, wahaGetSession, wahaCreateSession, wahaStartSession, wahaLogoutSession, wahaDeleteSession, wahaGetQrCode, wahaListSessions, type WahaConfig } from "./lib/waha-client";
 import { extractPhoneNumber } from "./lib/whatsapp-normalizer";
 
 // Query parameter validation schemas
@@ -333,6 +333,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error starting WAHA instance:", error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Logout WAHA instance (disconnect WhatsApp and allow new QR code)
+  app.post("/api/waha/instances/:sessionName/logout", async (req, res) => {
+    try {
+      const { sessionName } = req.params;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
+
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
+        });
+      }
+
+      const wahaConfig: WahaConfig = {
+        url: wahaUrl,
+        apiKey: wahaApiKey,
+        session: sessionName
+      };
+
+      // Logout the session (disconnects WhatsApp)
+      const result = await wahaLogoutSession(wahaConfig);
+      
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error("Error logging out WAHA instance:", error);
       return res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : "Unknown error"
