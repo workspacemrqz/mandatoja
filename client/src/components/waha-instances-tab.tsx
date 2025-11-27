@@ -341,7 +341,6 @@ export default function WahaInstancesTab() {
                         </Button>
                       )}
                       <Button
-                        variant="destructive"
                         size="sm"
                         onClick={() => {
                           if (window.confirm(`Tem certeza que deseja excluir a instância "${instance.name}"?`)) {
