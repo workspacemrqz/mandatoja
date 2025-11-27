@@ -111,6 +111,11 @@ export default function WahaInstancesTab() {
   const connectInstance = async (sessionName: string) => {
     setIsConnectingInstance(sessionName);
     setError(null);
+    
+    // Open dialog immediately with loading state
+    setQrCodeData({ sessionName, qrCode: '' });
+    setIsQrDialogOpen(true);
+    setIsLoadingQrCode(true);
 
     try {
       const response = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/start`, {
@@ -120,13 +125,14 @@ export default function WahaInstancesTab() {
       const data = await response.json();
 
       if (data.success) {
-        setTimeout(() => {
-          fetchQrCode(sessionName);
-        }, 3000);
+        // Fetch QR code immediately after start
+        await fetchQrCode(sessionName);
       } else {
+        setIsQrDialogOpen(false);
         setError(data.error || "Erro ao conectar instância");
       }
     } catch (err) {
+      setIsQrDialogOpen(false);
       setError(err instanceof Error ? err.message : "Erro ao conectar instância");
     } finally {
       setIsConnectingInstance(null);
@@ -375,8 +381,13 @@ export default function WahaInstancesTab() {
               Escaneie o QR Code abaixo com o WhatsApp para conectar a instância "{qrCodeData?.sessionName}"
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-4">
-            {qrCodeData?.qrCode && (
+          <div className="flex flex-col items-center justify-center p-4 min-h-[280px]">
+            {isLoadingQrCode && !qrCodeData?.qrCode ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Gerando QR Code...</p>
+              </div>
+            ) : qrCodeData?.qrCode ? (
               <div className="bg-white p-4 rounded-lg">
                 <img
                   src={qrCodeData.qrCode.startsWith('data:') ? qrCodeData.qrCode : `data:image/png;base64,${qrCodeData.qrCode}`}
@@ -385,7 +396,7 @@ export default function WahaInstancesTab() {
                   data-testid="img-qr-code"
                 />
               </div>
-            )}
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
