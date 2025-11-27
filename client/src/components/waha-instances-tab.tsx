@@ -262,26 +262,11 @@ export default function WahaInstancesTab() {
       )}
 
       <Card className="bg-[#090909] border-border">
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <div>
-            <CardTitle data-testid="text-instances-title">Instâncias WAHA</CardTitle>
-            <CardDescription>
-              Gerencie as sessões/instâncias do WhatsApp
-            </CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchInstances}
-            disabled={isLoadingInstances}
-            data-testid="button-refresh-instances"
-          >
-            {isLoadingInstances ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-          </Button>
+        <CardHeader>
+          <CardTitle data-testid="text-instances-title">Instâncias WAHA</CardTitle>
+          <CardDescription>
+            Gerencie as sessões/instâncias do WhatsApp
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoadingInstances && wahaInstances.length === 0 ? (
