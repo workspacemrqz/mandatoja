@@ -24,6 +24,7 @@ export default function WahaInstancesTab() {
   const [isCreatingInstance, setIsCreatingInstance] = useState(false);
   const [isDeletingInstance, setIsDeletingInstance] = useState<string | null>(null);
   const [isConnectingInstance, setIsConnectingInstance] = useState<string | null>(null);
+  const [isReconnectingInstance, setIsReconnectingInstance] = useState<string | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -136,6 +137,47 @@ export default function WahaInstancesTab() {
       setError(err instanceof Error ? err.message : "Erro ao conectar instância");
     } finally {
       setIsConnectingInstance(null);
+    }
+  };
+
+  const reconnectInstance = async (sessionName: string) => {
+    setIsReconnectingInstance(sessionName);
+    setError(null);
+    
+    // Open dialog immediately with loading state
+    setQrCodeData({ sessionName, qrCode: '' });
+    setIsQrDialogOpen(true);
+    setIsLoadingQrCode(true);
+
+    try {
+      // First, stop the session
+      await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/stop`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      // Wait a moment for the session to stop
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Then start it again
+      const response = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        // Fetch QR code immediately after start
+        await fetchQrCode(sessionName);
+      } else {
+        setIsQrDialogOpen(false);
+        setError(data.error || "Erro ao reconectar instância");
+      }
+    } catch (err) {
+      setIsQrDialogOpen(false);
+      setError(err instanceof Error ? err.message : "Erro ao reconectar instância");
+    } finally {
+      setIsReconnectingInstance(null);
     }
   };
 
@@ -323,6 +365,22 @@ export default function WahaInstancesTab() {
                             <QrCode className="h-4 w-4 mr-1" />
                           )}
                           Ver QR Code
+                        </Button>
+                      )}
+                      {instance.status === 'WORKING' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => reconnectInstance(instance.name)}
+                          disabled={isReconnectingInstance === instance.name}
+                          data-testid={`button-reconnect-${instance.name}`}
+                        >
+                          {isReconnectingInstance === instance.name ? (
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 mr-1" />
+                          )}
+                          Reconectar
                         </Button>
                       )}
                       <Button
