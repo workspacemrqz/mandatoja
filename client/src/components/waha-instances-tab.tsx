@@ -386,25 +386,7 @@ export default function WahaInstancesTab() {
                 />
               </div>
             )}
-            <p className="text-sm text-muted-foreground mt-4 text-center">
-              Abra o WhatsApp no seu celular, vá em Configurações &gt; Aparelhos Conectados &gt; Conectar um Aparelho e escaneie este QR Code
-            </p>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => qrCodeData && fetchQrCode(qrCodeData.sessionName)}
-              disabled={isLoadingQrCode}
-              data-testid="button-refresh-qr"
-            >
-              {isLoadingQrCode ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Atualizar QR Code
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
