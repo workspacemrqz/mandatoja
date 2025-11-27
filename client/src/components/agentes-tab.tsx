@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, Edit2, Trash2, Pencil, Bot, Users } from "lucide-react";
 import { useActivation } from "@/contexts/activation-context";
 import { ActivationSpinner } from "@/components/ui/activation-spinner";
+import WahaInstancesTab from "./waha-instances-tab";
 
 interface WhatsAppGroup {
   id: string;
@@ -1252,7 +1253,10 @@ export default function AgentesTab() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Desktop TabsList - Hidden on mobile */}
-          <TabsList className="hidden md:grid w-full grid-cols-4 bg-[#090909] rounded-lg border border-border h-auto p-1 items-center" data-testid="tabs-list">
+          <TabsList className="hidden md:grid w-full grid-cols-5 bg-[#090909] rounded-lg border border-border h-auto p-1 items-center" data-testid="tabs-list">
+            <TabsTrigger value="instancias" data-testid="tab-instancias" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              Instancias WAHA
+            </TabsTrigger>
             <TabsTrigger value="replicador" data-testid="tab-replicador" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               Agente Replicador
             </TabsTrigger>
@@ -1277,6 +1281,7 @@ export default function AgentesTab() {
                   data-testid="mobile-tab-dropdown"
                 >
                   <span>
+                    {activeTab === "instancias" && "Instancias WAHA"}
                     {activeTab === "replicador" && "Agente Replicador"}
                     {activeTab === "militantes" && "Agentes Militantes"}
                     {activeTab === "clone" && "Agente Clone"}
@@ -1286,6 +1291,13 @@ export default function AgentesTab() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[calc(100vw-3rem)]" align="start">
+                <DropdownMenuItem 
+                  onClick={() => setActiveTab("instancias")}
+                  data-testid="mobile-tab-instancias"
+                  className={activeTab === "instancias" ? "bg-primary text-primary-foreground" : ""}
+                >
+                  Instancias WAHA
+                </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setActiveTab("replicador")}
                   data-testid="mobile-tab-replicador"
@@ -1317,6 +1329,11 @@ export default function AgentesTab() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Instancias WAHA Tab */}
+          <TabsContent value="instancias" className="space-y-4">
+            <WahaInstancesTab />
+          </TabsContent>
 
           {/* Agente Replicador Tab */}
           <TabsContent value="replicador" className="space-y-4">

@@ -6,7 +6,7 @@ import { runInstagramAgentWorkflow } from "./workflows/instagram-agent";
 import { processWhatsAppMessage } from "./workflows/clone-agent";
 import { ZodError, z } from "zod";
 import * as XLSX from "xlsx";
-import { wahaGetContact, wahaSendText, wahaCheckNumberExists, phoneToChatId, groupIdToWaha, wahaGetGroups, wahaGetGroup, wahaGetGroupParticipants, wahaGetSession, type WahaConfig } from "./lib/waha-client";
+import { wahaGetContact, wahaSendText, wahaCheckNumberExists, phoneToChatId, groupIdToWaha, wahaGetGroups, wahaGetGroup, wahaGetGroupParticipants, wahaGetSession, wahaCreateSession, wahaStartSession, wahaDeleteSession, wahaGetQrCode, wahaListSessions, type WahaConfig } from "./lib/waha-client";
 import { extractPhoneNumber } from "./lib/whatsapp-normalizer";
 
 // Query parameter validation schemas
@@ -160,6 +160,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json({
         status: "FAILED",
         connected: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // WAHA Instance Management Routes
+  
+  // Create WAHA instance (session)
+  app.post("/api/waha/instances", async (req, res) => {
+    try {
+      const { wahaUrl, wahaApiKey, sessionName } = req.body;
+
+      if (!wahaUrl || !wahaApiKey || !sessionName) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+        });
+      }
+
+      const wahaConfig: WahaConfig = {
+        url: wahaUrl,
+        apiKey: wahaApiKey,
+        session: sessionName
+      };
+
+      // Create the session
+      const result = await wahaCreateSession(wahaConfig);
+      
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error("Error creating WAHA instance:", error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Delete WAHA instance (session)
+  app.delete("/api/waha/instances/:sessionName", async (req, res) => {
+    try {
+      const { sessionName } = req.params;
+      const { wahaUrl, wahaApiKey } = req.query;
+
+      if (!wahaUrl || !wahaApiKey || !sessionName) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+        });
+      }
+
+      const wahaConfig: WahaConfig = {
+        url: wahaUrl as string,
+        apiKey: wahaApiKey as string,
+        session: sessionName
+      };
+
+      // Delete the session
+      const result = await wahaDeleteSession(wahaConfig);
+      
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error("Error deleting WAHA instance:", error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Connect/Start WAHA instance (session)
+  app.post("/api/waha/instances/:sessionName/start", async (req, res) => {
+    try {
+      const { sessionName } = req.params;
+      const { wahaUrl, wahaApiKey } = req.body;
+
+      if (!wahaUrl || !wahaApiKey || !sessionName) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+        });
+      }
+
+      const wahaConfig: WahaConfig = {
+        url: wahaUrl,
+        apiKey: wahaApiKey,
+        session: sessionName
+      };
+
+      // Start the session
+      const result = await wahaStartSession(wahaConfig);
+      
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error("Error starting WAHA instance:", error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get QR Code for WAHA instance
+  app.get("/api/waha/instances/:sessionName/qr", async (req, res) => {
+    try {
+      const { sessionName } = req.params;
+      const { wahaUrl, wahaApiKey } = req.query;
+
+      if (!wahaUrl || !wahaApiKey || !sessionName) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+        });
+      }
+
+      const wahaConfig: WahaConfig = {
+        url: wahaUrl as string,
+        apiKey: wahaApiKey as string,
+        session: sessionName
+      };
+
+      // Get the QR code
+      const qrData = await wahaGetQrCode(wahaConfig);
+      
+      return res.status(200).json({
+        success: true,
+        data: qrData
+      });
+    } catch (error) {
+      console.error("Error getting QR code:", error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // List WAHA instances (sessions)
+  app.get("/api/waha/instances", async (req, res) => {
+    try {
+      const { wahaUrl, wahaApiKey } = req.query;
+
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required parameters: wahaUrl or wahaApiKey"
+        });
+      }
+
+      // List all sessions
+      const sessions = await wahaListSessions(wahaUrl as string, wahaApiKey as string);
+      
+      return res.status(200).json({
+        success: true,
+        data: sessions
+      });
+    } catch (error) {
+      console.error("Error listing WAHA instances:", error);
+      return res.status(500).json({
+        success: false,
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

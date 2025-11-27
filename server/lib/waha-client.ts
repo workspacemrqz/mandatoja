@@ -458,3 +458,78 @@ export function calculateTypingDuration(messageLength: number): number {
   // Retorna um valor aleatório entre 2 e 6 segundos
   return 2 + Math.random() * 4;
 }
+
+/**
+ * Delete/remove a WAHA session
+ */
+export async function wahaDeleteSession(config: WahaConfig): Promise<any> {
+  return wahaRequest(config, `/api/sessions/${config.session}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
+ * Get QR code for session authentication
+ * Returns the QR code as base64 image data
+ */
+export async function wahaGetQrCode(config: WahaConfig): Promise<{ value: string; mimetype?: string }> {
+  const url = `${config.url}/api/${config.session}/auth/qr`;
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-Api-Key': config.apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`WAHA API error (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Get QR code as raw image
+ */
+export async function wahaGetQrCodeImage(config: WahaConfig): Promise<Buffer> {
+  const url = `${config.url}/api/${config.session}/auth/qr`;
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'image/png',
+      'X-Api-Key': config.apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`WAHA API error (${response.status}): ${errorText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/**
+ * List all sessions
+ */
+export async function wahaListSessions(baseUrl: string, apiKey: string): Promise<any[]> {
+  const response = await fetch(`${baseUrl}/api/sessions`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`WAHA API error (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
+}
