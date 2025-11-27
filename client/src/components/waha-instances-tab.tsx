@@ -15,8 +15,6 @@ interface WahaSession {
 }
 
 export default function WahaInstancesTab() {
-  const [wahaBaseUrl, setWahaBaseUrl] = useState("");
-  const [wahaApiKey, setWahaApiKey] = useState("");
   const [newSessionName, setNewSessionName] = useState("");
   const [wahaInstances, setWahaInstances] = useState<WahaSession[]>([]);
   const [isLoadingInstances, setIsLoadingInstances] = useState(false);
@@ -28,13 +26,9 @@ export default function WahaInstancesTab() {
   const [isConnectingInstance, setIsConnectingInstance] = useState<string | null>(null);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const wahaCredentialsRef = useRef({ url: "", apiKey: "" });
 
   useEffect(() => {
-    wahaCredentialsRef.current = { url: wahaBaseUrl, apiKey: wahaApiKey };
-  }, [wahaBaseUrl, wahaApiKey]);
-
-  useEffect(() => {
+    fetchInstances();
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
@@ -43,18 +37,11 @@ export default function WahaInstancesTab() {
   }, []);
 
   const fetchInstances = async () => {
-    if (!wahaBaseUrl || !wahaApiKey) {
-      setError("Informe a URL e a chave de API do WAHA");
-      return;
-    }
-
     setIsLoadingInstances(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/waha/instances?wahaUrl=${encodeURIComponent(wahaBaseUrl)}&wahaApiKey=${encodeURIComponent(wahaApiKey)}`
-      );
+      const response = await fetch("/api/waha/instances");
       const data = await response.json();
 
       if (data.success) {
@@ -70,8 +57,8 @@ export default function WahaInstancesTab() {
   };
 
   const createInstance = async () => {
-    if (!wahaBaseUrl || !wahaApiKey || !newSessionName) {
-      setError("Preencha todos os campos para criar uma instância");
+    if (!newSessionName) {
+      setError("Informe o nome da sessão");
       return;
     }
 
@@ -82,11 +69,7 @@ export default function WahaInstancesTab() {
       const response = await fetch("/api/waha/instances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wahaUrl: wahaBaseUrl,
-          wahaApiKey: wahaApiKey,
-          sessionName: newSessionName,
-        }),
+        body: JSON.stringify({ sessionName: newSessionName }),
       });
       const data = await response.json();
 
@@ -104,19 +87,13 @@ export default function WahaInstancesTab() {
   };
 
   const deleteInstance = async (sessionName: string) => {
-    if (!wahaBaseUrl || !wahaApiKey) {
-      setError("Credenciais WAHA não configuradas");
-      return;
-    }
-
     setIsDeletingInstance(sessionName);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/waha/instances/${encodeURIComponent(sessionName)}?wahaUrl=${encodeURIComponent(wahaBaseUrl)}&wahaApiKey=${encodeURIComponent(wahaApiKey)}`,
-        { method: "DELETE" }
-      );
+      const response = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}`, {
+        method: "DELETE"
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -132,11 +109,6 @@ export default function WahaInstancesTab() {
   };
 
   const connectInstance = async (sessionName: string) => {
-    if (!wahaBaseUrl || !wahaApiKey) {
-      setError("Credenciais WAHA não configuradas");
-      return;
-    }
-
     setIsConnectingInstance(sessionName);
     setError(null);
 
@@ -144,10 +116,6 @@ export default function WahaInstancesTab() {
       const response = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          wahaUrl: wahaBaseUrl,
-          wahaApiKey: wahaApiKey,
-        }),
       });
       const data = await response.json();
 
@@ -166,13 +134,8 @@ export default function WahaInstancesTab() {
   };
 
   const checkSessionStatus = useCallback(async (sessionName: string): Promise<boolean> => {
-    const { url, apiKey } = wahaCredentialsRef.current;
-    if (!url || !apiKey) return false;
-    
     try {
-      const response = await fetch(
-        `/api/waha/instances?wahaUrl=${encodeURIComponent(url)}&wahaApiKey=${encodeURIComponent(apiKey)}`
-      );
+      const response = await fetch("/api/waha/instances");
       const data = await response.json();
       
       if (data.success) {
@@ -187,18 +150,11 @@ export default function WahaInstancesTab() {
   }, []);
 
   const fetchQrCode = async (sessionName: string) => {
-    if (!wahaBaseUrl || !wahaApiKey) {
-      setError("Credenciais WAHA não configuradas");
-      return;
-    }
-
     setIsLoadingQrCode(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/waha/instances/${encodeURIComponent(sessionName)}/qr?wahaUrl=${encodeURIComponent(wahaBaseUrl)}&wahaApiKey=${encodeURIComponent(wahaApiKey)}`
-      );
+      const response = await fetch(`/api/waha/instances/${encodeURIComponent(sessionName)}/qr`);
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -256,52 +212,6 @@ export default function WahaInstancesTab() {
     <div className="space-y-6">
       <Card className="bg-[#090909] border-border">
         <CardHeader>
-          <CardTitle data-testid="text-waha-config-title">Configuração WAHA</CardTitle>
-          <CardDescription>
-            Configure as credenciais de acesso à API WAHA para gerenciar instâncias do WhatsApp
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="waha-url">URL do Servidor WAHA</Label>
-              <Input
-                id="waha-url"
-                placeholder="http://localhost:3000"
-                value={wahaBaseUrl}
-                onChange={(e) => setWahaBaseUrl(e.target.value)}
-                data-testid="input-waha-url"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="waha-api-key">Chave de API</Label>
-              <Input
-                id="waha-api-key"
-                type="password"
-                placeholder="Sua chave de API"
-                value={wahaApiKey}
-                onChange={(e) => setWahaApiKey(e.target.value)}
-                data-testid="input-waha-api-key"
-              />
-            </div>
-          </div>
-          <Button
-            onClick={fetchInstances}
-            disabled={isLoadingInstances || !wahaBaseUrl || !wahaApiKey}
-            data-testid="button-fetch-instances"
-          >
-            {isLoadingInstances ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Carregar Instâncias
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-[#090909] border-border">
-        <CardHeader>
           <CardTitle data-testid="text-create-instance-title">Criar Nova Instância</CardTitle>
           <CardDescription>
             Crie uma nova sessão/instância no servidor WAHA
@@ -313,16 +223,17 @@ export default function WahaInstancesTab() {
               <Label htmlFor="session-name">Nome da Sessão</Label>
               <Input
                 id="session-name"
-                placeholder="minha-instancia"
+                placeholder="Nome da nova sessão"
                 value={newSessionName}
                 onChange={(e) => setNewSessionName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && createInstance()}
                 data-testid="input-session-name"
               />
             </div>
             <div className="flex items-end">
               <Button
                 onClick={createInstance}
-                disabled={isCreatingInstance || !wahaBaseUrl || !wahaApiKey || !newSessionName}
+                disabled={isCreatingInstance || !newSessionName}
                 data-testid="button-create-instance"
               >
                 {isCreatingInstance ? (
@@ -338,46 +249,42 @@ export default function WahaInstancesTab() {
       </Card>
 
       {error && (
-        <Card className="bg-red-500/10 border-red-500/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-red-500">
-              <AlertCircle className="h-4 w-4" />
-              <span data-testid="text-error-message">{error}</span>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg flex items-center gap-2" data-testid="text-error-message">
+          <AlertCircle className="h-4 w-4" />
+          {error}
+        </div>
       )}
 
       <Card className="bg-[#090909] border-border">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle data-testid="text-instances-list-title">Instâncias WAHA</CardTitle>
-              <CardDescription>
-                Lista de sessões disponíveis no servidor WAHA
-              </CardDescription>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchInstances}
-              disabled={isLoadingInstances || !wahaBaseUrl || !wahaApiKey}
-              data-testid="button-refresh-instances"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoadingInstances ? 'animate-spin' : ''}`} />
-            </Button>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div>
+            <CardTitle data-testid="text-instances-title">Instâncias WAHA</CardTitle>
+            <CardDescription>
+              Gerencie as sessões/instâncias do WhatsApp
+            </CardDescription>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchInstances}
+            disabled={isLoadingInstances}
+            data-testid="button-refresh-instances"
+          >
+            {isLoadingInstances ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
         </CardHeader>
         <CardContent>
-          {isLoadingInstances ? (
+          {isLoadingInstances && wahaInstances.length === 0 ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : wahaInstances.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground" data-testid="text-no-instances">
-              {wahaBaseUrl && wahaApiKey
-                ? "Nenhuma instância encontrada. Crie uma nova instância acima."
-                : "Configure as credenciais WAHA acima para carregar as instâncias."}
+              Nenhuma instância encontrada. Crie uma nova instância acima.
             </div>
           ) : (
             <ScrollArea className="h-[400px]">

@@ -166,16 +166,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // WAHA Instance Management Routes
+  // Uses environment variables WAHA_URL and WAHA_API for all operations
   
   // Create WAHA instance (session)
   app.post("/api/waha/instances", async (req, res) => {
     try {
-      const { wahaUrl, wahaApiKey, sessionName } = req.body;
+      const { sessionName } = req.body;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
 
-      if (!wahaUrl || !wahaApiKey || !sessionName) {
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({
+          success: false,
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
+        });
+      }
+
+      if (!sessionName) {
         return res.status(400).json({
           success: false,
-          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+          error: "Nome da sessão é obrigatório"
         });
       }
 
@@ -205,18 +215,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/waha/instances/:sessionName", async (req, res) => {
     try {
       const { sessionName } = req.params;
-      const { wahaUrl, wahaApiKey } = req.query;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
 
-      if (!wahaUrl || !wahaApiKey || !sessionName) {
-        return res.status(400).json({
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({
           success: false,
-          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
         });
       }
 
       const wahaConfig: WahaConfig = {
-        url: wahaUrl as string,
-        apiKey: wahaApiKey as string,
+        url: wahaUrl,
+        apiKey: wahaApiKey,
         session: sessionName
       };
 
@@ -240,12 +251,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/waha/instances/:sessionName/start", async (req, res) => {
     try {
       const { sessionName } = req.params;
-      const { wahaUrl, wahaApiKey } = req.body;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
 
-      if (!wahaUrl || !wahaApiKey || !sessionName) {
-        return res.status(400).json({
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({
           success: false,
-          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
         });
       }
 
@@ -275,18 +287,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/waha/instances/:sessionName/qr", async (req, res) => {
     try {
       const { sessionName } = req.params;
-      const { wahaUrl, wahaApiKey } = req.query;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
 
-      if (!wahaUrl || !wahaApiKey || !sessionName) {
-        return res.status(400).json({
+      if (!wahaUrl || !wahaApiKey) {
+        return res.status(500).json({
           success: false,
-          error: "Missing required parameters: wahaUrl, wahaApiKey, or sessionName"
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
         });
       }
 
       const wahaConfig: WahaConfig = {
-        url: wahaUrl as string,
-        apiKey: wahaApiKey as string,
+        url: wahaUrl,
+        apiKey: wahaApiKey,
         session: sessionName
       };
 
@@ -309,17 +322,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // List WAHA instances (sessions)
   app.get("/api/waha/instances", async (req, res) => {
     try {
-      const { wahaUrl, wahaApiKey } = req.query;
+      const wahaUrl = process.env.WAHA_URL;
+      const wahaApiKey = process.env.WAHA_API;
 
       if (!wahaUrl || !wahaApiKey) {
-        return res.status(400).json({
+        return res.status(500).json({
           success: false,
-          error: "Missing required parameters: wahaUrl or wahaApiKey"
+          error: "WAHA_URL ou WAHA_API não configurados no servidor"
         });
       }
 
       // List all sessions
-      const sessions = await wahaListSessions(wahaUrl as string, wahaApiKey as string);
+      const sessions = await wahaListSessions(wahaUrl, wahaApiKey);
       
       return res.status(200).json({
         success: true,
